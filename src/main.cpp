@@ -2,9 +2,9 @@
 #include "game.h"  
 
 int main() {
-    InitWindow(800, 600, "Jogo Triatlo");
+    InitWindow(1200, 700, "Jogo Triatlo");
     SetTargetFPS(240);  
-    RunGame();         // Chama o loop do jogo
+    RunGame();         
     CloseWindow();
     return 0;
 }
