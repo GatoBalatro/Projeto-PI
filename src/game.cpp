@@ -4,6 +4,7 @@
 
 GameState currentState = MENU;
 Player player;
+Obstacle lixo;
 
 // Desenha o menu principal
 void DrawMenu() {
@@ -104,9 +105,22 @@ void HandleMenuInput() {
 
 // Função principal do jogo 
 void RunGame() {
+
     player = { {400, 300}, {2.0f, 2.0f}, 50, 50 };
+    lixo = { {1000, 200}, {2.0f, 2.0f}, 30, 30 };
+    Vector2 cameraOffset = { 0, 0 };
+    float position_x_mais_longe = 0.0f;
+    float limite_tela = 1150.0f;
+
+    // Cria retângulos para colisão
+
+    float timer = 0.0f;
 
     while (!WindowShouldClose()) {
+
+        if(position_x_mais_longe < player.position.x) {
+            position_x_mais_longe = player.position.x;
+        }
         // Tratar input baseado no estado
         if (currentState == MENU) {
             HandleMenuInput();
@@ -117,30 +131,79 @@ void RunGame() {
             DrawCredits();
         }
         else if (currentState == GAME) {
+            
+            if (!IsKeyDown(KEY_A)){
+            if(IsKeyDown(KEY_D)) cameraOffset.x = cameraOffset.x + 1.0;
+            
+            cameraOffset.y = 350 - player.position.y;
+            }
+            timer += GetFrameTime();
+            Rectangle lixoRec = { lixo.position.x, lixo.position.y, lixo.width, lixo.height };
+            Rectangle playerRec = { player.position.x, player.position.y, lixo.width, lixo.height };
             // movimento com WASD
+        
             if (IsKeyDown(KEY_W)) player.position.y -= player.speed.y;
             if (IsKeyDown(KEY_S)) player.position.y += player.speed.y;
+
+            if(!CheckCollisionRecs(playerRec, lixoRec)) {
+
             if (IsKeyDown(KEY_A)) player.position.x -= player.speed.x;
             if (IsKeyDown(KEY_D)) player.position.x += player.speed.x;
+            lixo.position = {lixo.position.x - lixo.speed.x, lixo.position.y};
+            }
 
             // Limites da tela 
             if (player.position.x <= 0) player.position.x = 0;
-            if (player.position.x + player.width >= 1200) player.position.x = 1200 - player.width;
+            if (player.position.x >= limite_tela) player.position.x = 1200 - player.width;
             if (player.position.y <= 0) player.position.y = 0;
             if (player.position.y + player.height >= 700) player.position.y = 700 - player.height;
 
+            if (lixo.position.x + lixo.width <= 0) {
+                lixo.position.x = 1000;
+                lixo.position.y = 100 + lixo.position.y;
+                if (lixo.position.y + lixo.height >= 650) {
+                    lixo.position.y = 100;
+                }
+            }
+  
+                
             // Voltar ao menu
             if (IsKeyPressed(KEY_ESCAPE)) {
                 currentState = MENU;
             }
 
             BeginDrawing();
-            ClearBackground(RAYWHITE);
+            ClearBackground(DARKGREEN);
+      
+            // Desenha o asfalto (retângulos)
+            DrawRectangle(0, 100, 1200, 500, DARKGRAY);
+
+            // Bordas da pista
+            DrawRectangleLinesEx((Rectangle){-30, 100, 1500, 500}, 10, WHITE);
+
+            // Faixa central tracejada
+            for (int i = 30; i < 3600; i += 60) {
+                DrawRectangle(i - cameraOffset.x,340, 40, 20, YELLOW);
+            }
+
+            // Curvas (se quiser)
+
+            DrawText("Pista vista de cima", 10, 10, 30, WHITE);
+
+            if (timer < 5.0f) DrawText("Fase 1", 500, 30 , 60, GOLD);
+            
             DrawText("Use WASD pra mover o bloco!", 10, 10, 20, DARKGRAY);
             DrawRectangleRec((Rectangle){player.position.x, player.position.y, player.width, player.height}, BLUE);
+            DrawRectangleRec((Rectangle){lixo.position.x, lixo.position.y, lixo.width, lixo.height}, RED);
             DrawText("teste movendo bloquinho!", 190, 550, 20, BLACK);
             DrawText("ESC - Menu", 10, 650, 20, GRAY);
+
+            if (CheckCollisionRecs(playerRec, lixoRec)) {
+            DrawText("Colidiu com o lixo!", 450, 350, 40, RED);
+            }   
             EndDrawing();
         }
     }
+
 }
+
