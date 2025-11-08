@@ -112,7 +112,6 @@ void RunGame() {
     float position_x_mais_longe = 0.0f;
     float limite_tela = 1150.0f;
 
-    // Cria retângulos para colisão
 
     float timer = 0.0f;
 
@@ -159,7 +158,7 @@ void RunGame() {
             if (player.position.y + player.height >= 700) player.position.y = 700 - player.height;
 
             if (lixo.position.x + lixo.width <= 0) {
-                lixo.position.x = 1000;
+                lixo.position.x = 1200;
                 lixo.position.y = 100 + lixo.position.y;
                 if (lixo.position.y + lixo.height >= 650) {
                     lixo.position.y = 100;
