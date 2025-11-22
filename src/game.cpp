@@ -5,6 +5,8 @@
 GameState currentState = MENU;
 Player player;
 Obstacle lixo;
+Music menuMusic;  // Adicione esta linha
+bool musicLoaded = false;  // Flag para controlar se a música já foi carregada
 
 // Desenha o menu principal
 void DrawMenu() {
@@ -34,6 +36,16 @@ void DrawMenu() {
     DrawText("INICIAR JOGO", 510, 325, 32, DARKGRAY);
     DrawText("CRÉDITOS", 535, 425, 32, DARKGRAY);
     DrawText("SAIR", 565, 525, 32, DARKGRAY);
+    
+    if (musicLoaded) {
+        char info[256];
+        sprintf(info, "Musica: OK | Tocando: %s | Frames: %d", 
+                IsMusicStreamPlaying(menuMusic) ? "SIM" : "NAO",
+                menuMusic.frameCount);
+        DrawText(info, 10, 50, 20, WHITE);
+    } else {
+        DrawText("Musica: NAO CARREGADA", 10, 50, 20, RED);
+    }
     
     EndDrawing();
 }
@@ -112,8 +124,39 @@ void RunGame() {
     float position_x_mais_longe = 0.0f;
     float limite_tela = 1150.0f;
 
-
     float timer = 0.0f;
+
+    // Carregar música do menu (apenas uma vez)
+    if (!musicLoaded) {
+        // Tentar múltiplos caminhos possíveis
+        const char* musicPaths[] = {
+            "Dave the Diver OST - On the boat.mp3",           // Pasta atual
+            "src/Dave the Diver OST - On the boat.mp3",       // Pasta src
+            "../src/Dave the Diver OST - On the boat.mp3",    // Uma pasta acima
+            "build/Dave the Diver OST - On the boat.mp3",     // Pasta build
+            "../Dave the Diver OST - On the boat.mp3"         // Raiz do projeto
+        };
+        
+        bool loaded = false;
+        for (int i = 0; i < 5; i++) {
+            menuMusic = LoadMusicStream(musicPaths[i]);
+            if (menuMusic.frameCount > 0) {
+                SetMusicVolume(menuMusic, 0.5f);
+                musicLoaded = true;
+                loaded = true;
+                TraceLog(LOG_INFO, "Musica carregada com sucesso de: %s", musicPaths[i]);
+                TraceLog(LOG_INFO, "FrameCount: %d, SampleRate: %d", menuMusic.frameCount, menuMusic.stream.sampleRate);
+                break;
+            } else {
+                TraceLog(LOG_WARNING, "Falha ao carregar musica de: %s (FrameCount: %d)", musicPaths[i], menuMusic.frameCount);
+            }
+        }
+        
+        if (!loaded) {
+            TraceLog(LOG_ERROR, "ERRO: Nao foi possivel carregar a musica em nenhum caminho!");
+            TraceLog(LOG_ERROR, "Verifique se o arquivo MP3 esta na pasta correta.");
+        }
+    }
 
     while (!WindowShouldClose()) {
 
@@ -122,14 +165,41 @@ void RunGame() {
         }
         // Tratar input baseado no estado
         if (currentState == MENU) {
+            // Tocar música se foi carregada e não estiver tocando
+            if (musicLoaded && menuMusic.frameCount > 0) {
+                if (!IsMusicStreamPlaying(menuMusic)) {
+                    PlayMusicStream(menuMusic);
+                    TraceLog(LOG_INFO, "Musica iniciada");
+                }
+                UpdateMusicStream(menuMusic);  // Atualiza o stream de música
+            } else if (!musicLoaded) {
+                // Mostrar aviso na tela se música não foi carregada
+                BeginDrawing();
+                ClearBackground(DARKGREEN);
+                DrawText("AVISO: Musica nao carregada!", 400, 600, 20, YELLOW);
+                EndDrawing();
+            }
+            
             HandleMenuInput();
             DrawMenu();
         }
         else if (currentState == CREDITS) {
+            // Continuar música nos créditos também
+            if (musicLoaded && menuMusic.frameCount > 0) {
+                if (!IsMusicStreamPlaying(menuMusic)) {
+                    PlayMusicStream(menuMusic);
+                }
+                UpdateMusicStream(menuMusic);
+            }
+            
             HandleMenuInput();
             DrawCredits();
         }
         else if (currentState == GAME) {
+            // Parar música quando entrar no jogo
+            if (IsMusicStreamPlaying(menuMusic)) {
+                StopMusicStream(menuMusic);
+            }
             
             if (!IsKeyDown(KEY_A)){
             if(IsKeyDown(KEY_D)) cameraOffset.x = cameraOffset.x + 1.0;
@@ -137,8 +207,8 @@ void RunGame() {
             cameraOffset.y = 350 - player.position.y;
             }
             timer += GetFrameTime();
-            Rectangle lixoRec = { lixo.position.x, lixo.position.y, lixo.width, lixo.height };
-            Rectangle playerRec = { player.position.x, player.position.y, lixo.width, lixo.height };
+            Rectangle lixoRec = { lixo.position.x, lixo.position.y, (float)lixo.width, (float)lixo.height };
+            Rectangle playerRec = { player.position.x, player.position.y, (float)player.width, (float)player.height };
             // movimento com WASD
         
             if (IsKeyDown(KEY_W)) player.position.y -= player.speed.y;
@@ -169,6 +239,10 @@ void RunGame() {
             // Voltar ao menu
             if (IsKeyPressed(KEY_ESCAPE)) {
                 currentState = MENU;
+                // Retomar música quando voltar ao menu
+                if (!IsMusicStreamPlaying(menuMusic)) {
+                    PlayMusicStream(menuMusic);
+                }
             }
 
             BeginDrawing();
@@ -192,8 +266,8 @@ void RunGame() {
             if (timer < 5.0f) DrawText("Fase 1", 500, 30 , 60, GOLD);
             
             DrawText("Use WASD pra mover o bloco!", 10, 10, 20, DARKGRAY);
-            DrawRectangleRec((Rectangle){player.position.x, player.position.y, player.width, player.height}, BLUE);
-            DrawRectangleRec((Rectangle){lixo.position.x, lixo.position.y, lixo.width, lixo.height}, RED);
+            DrawRectangleRec((Rectangle){player.position.x, player.position.y, (float)player.width, (float)player.height}, BLUE);
+            DrawRectangleRec((Rectangle){lixo.position.x, lixo.position.y, (float)lixo.width, (float)lixo.height}, RED);
             DrawText("teste movendo bloquinho!", 190, 550, 20, BLACK);
             DrawText("ESC - Menu", 10, 650, 20, GRAY);
 
@@ -203,6 +277,10 @@ void RunGame() {
             EndDrawing();
         }
     }
-
+    
+    // Descarregar música ao sair
+    if (musicLoaded) {
+        UnloadMusicStream(menuMusic);
+    }
 }
 
