@@ -1,9 +1,22 @@
 #include <raylib.h>
 #include "game.h" 
 #include <string.h>
+#include <stdio.h>  // Alternativa: usar stdio.h (versão C)
 
 GameState currentState = MENU;
 Player player;
+Obstacle lixo;
+Music menuMusic;  // Adicione esta linha
+bool musicLoaded = false;  // Flag para controlar se a música já foi carregada
+
+// Variáveis para sprite sheet do jogador
+Texture2D playerSpriteSheet = {0};
+bool playerSpriteLoaded = false;
+int playerFrameCount = 8;  // 8 frames no sprite sheet
+float playerFrameWidth = 0.0f;  // Largura de cada frame
+float animationTime = 0.0f;  // Tempo para animação
+float animationSpeed = 0.15f;  // Velocidade da animação (ajuste conforme necessário)
+int currentFrame = 0;  // Frame atual da animação
 
 // Desenha o menu principal
 void DrawMenu() {
@@ -33,6 +46,24 @@ void DrawMenu() {
     DrawText("INICIAR JOGO", 510, 325, 32, DARKGRAY);
     DrawText("CRÉDITOS", 535, 425, 32, DARKGRAY);
     DrawText("SAIR", 565, 525, 32, DARKGRAY);
+    
+    if (musicLoaded) {
+        char info[512];
+        sprintf(info, "Musica: OK | FrameCount: %d | Tocando: %s | Tempo: %.1f/%.1f", 
+                menuMusic.frameCount,
+                IsMusicStreamPlaying(menuMusic) ? "SIM" : "NAO",
+                GetMusicTimePlayed(menuMusic),
+                GetMusicTimeLength(menuMusic));
+        DrawText(info, 10, 50, 18, WHITE);
+        
+        if (IsAudioDeviceReady()) {
+            DrawText("Audio Device: READY", 10, 70, 18, GREEN);
+        } else {
+            DrawText("Audio Device: NOT READY", 10, 70, 18, RED);
+        }
+    } else {
+        DrawText("Musica: NAO CARREGADA", 10, 50, 20, RED);
+    }
     
     EndDrawing();
 }
@@ -104,43 +135,256 @@ void HandleMenuInput() {
 
 // Função principal do jogo 
 void RunGame() {
+
     player = { {400, 300}, {2.0f, 2.0f}, 50, 50 };
+    lixo = { {1000, 200}, {2.0f, 2.0f}, 30, 30 };
+    Vector2 cameraOffset = { 0, 0 };
+    float position_x_mais_longe = 0.0f;
+    float limite_tela = 1150.0f;
+
+    float timer = 0.0f;
+    animationTime = 0.0f;  // Resetar animação
+    currentFrame = 0;
+
+    // Carregar sprite sheet do jogador (apenas uma vez)
+    if (!playerSpriteLoaded) {
+        const char* spritePaths[] = {
+            "player.png",                    // Pasta atual (build)
+            "src/player.png",               // Pasta src
+            "../src/player.png",            // Uma pasta acima
+            "sprites/player.png",           // Pasta sprites
+            "assets/player.png"             // Pasta assets
+        };
+        
+        bool loaded = false;
+        for (int i = 0; i < 5; i++) {
+            playerSpriteSheet = LoadTexture(spritePaths[i]);
+            if (playerSpriteSheet.id > 0 && playerSpriteSheet.width > 0) {
+                // Calcular largura de cada frame (sprite sheet horizontal com 8 frames)
+                playerFrameWidth = (float)playerSpriteSheet.width / playerFrameCount;
+                
+                // Ajustar tamanho do jogador baseado no frame
+                player.width = (int)playerFrameWidth;
+                player.height = playerSpriteSheet.height;
+                
+                playerSpriteLoaded = true;
+                loaded = true;
+                TraceLog(LOG_INFO, "Sprite sheet do jogador carregado de: %s", spritePaths[i]);
+                TraceLog(LOG_INFO, "Tamanho total: %dx%d | Frame: %.0fx%d", 
+                        playerSpriteSheet.width, playerSpriteSheet.height,
+                        playerFrameWidth, player.height);
+                break;
+            } else {
+                UnloadTexture(playerSpriteSheet);
+            }
+        }
+        
+        if (!loaded) {
+            TraceLog(LOG_WARNING, "Sprite sheet do jogador nao encontrado, usando retangulo azul");
+        }
+    }
+
+    // Carregar música do menu (apenas uma vez)
+    if (!musicLoaded) {
+        // Tentar múltiplos caminhos possíveis (OGG tem melhor suporte)
+        const char* musicPaths[] = {
+            "Dave-the-Diver-OST-On-the-boat.ogg",              // Pasta atual (build)
+            "src/Dave-the-Diver-OST-On-the-boat.ogg",           // Pasta src
+            "../src/Dave-the-Diver-OST-On-the-boat.ogg",       // Uma pasta acima
+            "Dave the Diver OST - On the boat.ogg",            // Nome alternativo (se houver)
+            "src/Dave the Diver OST - On the boat.ogg",        // Nome alternativo em src
+            "Dave the Diver OST - On the boat.mp3",            // Fallback para MP3
+            "src/Dave the Diver OST - On the boat.mp3"         // Fallback MP3 em src
+        };
+        
+        bool loaded = false;
+        for (int i = 0; i < 7; i++) {
+            TraceLog(LOG_INFO, "Tentando carregar musica de: %s", musicPaths[i]);
+            menuMusic = LoadMusicStream(musicPaths[i]);
+            if (menuMusic.frameCount > 0) {
+                SetMusicVolume(menuMusic, 0.7f);  // Volume 70%
+                musicLoaded = true;
+                loaded = true;
+                TraceLog(LOG_INFO, "SUCCESS: Musica carregada de: %s", musicPaths[i]);
+                TraceLog(LOG_INFO, "FrameCount: %d, SampleRate: %d", menuMusic.frameCount, menuMusic.stream.sampleRate);
+                break;
+            } else {
+                TraceLog(LOG_WARNING, "Falha: %s (FrameCount: %d)", musicPaths[i], menuMusic.frameCount);
+            }
+        }
+        
+        if (!loaded) {
+            TraceLog(LOG_ERROR, "ERRO: Nao foi possivel carregar a musica em nenhum caminho!");
+            TraceLog(LOG_ERROR, "Verifique se o arquivo OGG esta na pasta src/ ou build/");
+        }
+    }
 
     while (!WindowShouldClose()) {
+
+        if(position_x_mais_longe < player.position.x) {
+            position_x_mais_longe = player.position.x;
+        }
         // Tratar input baseado no estado
         if (currentState == MENU) {
+            // Tocar música se foi carregada e não estiver tocando
+            if (musicLoaded && menuMusic.frameCount > 0) {
+                if (!IsMusicStreamPlaying(menuMusic)) {
+                    PlayMusicStream(menuMusic);
+                    TraceLog(LOG_INFO, "Musica iniciada");
+                }
+                UpdateMusicStream(menuMusic);  // Atualiza o stream de música
+            } else if (!musicLoaded) {
+                // Mostrar aviso na tela se música não foi carregada
+                BeginDrawing();
+                ClearBackground(DARKGREEN);
+                DrawText("AVISO: Musica nao carregada!", 400, 600, 20, YELLOW);
+                EndDrawing();
+            }
+            
             HandleMenuInput();
             DrawMenu();
         }
         else if (currentState == CREDITS) {
+            // Continuar música nos créditos também
+            if (musicLoaded && menuMusic.frameCount > 0) {
+                if (!IsMusicStreamPlaying(menuMusic)) {
+                    PlayMusicStream(menuMusic);
+                }
+                UpdateMusicStream(menuMusic);
+            }
+            
             HandleMenuInput();
             DrawCredits();
         }
         else if (currentState == GAME) {
+            // Parar música quando entrar no jogo
+            if (IsMusicStreamPlaying(menuMusic)) {
+                StopMusicStream(menuMusic);
+            }
+            
+            // Atualizar animação baseada no movimento
+            bool isMoving = IsKeyDown(KEY_W) || IsKeyDown(KEY_S) || 
+                            IsKeyDown(KEY_A) || IsKeyDown(KEY_D);
+            
+            if (isMoving) {
+                // Animar apenas quando o jogador está se movendo
+                animationTime += GetFrameTime();
+                if (animationTime >= animationSpeed) {
+                    currentFrame = (currentFrame + 1) % playerFrameCount;
+                    animationTime = 0.0f;
+                }
+            } else {
+                // Quando parado, manter no primeiro frame
+                currentFrame = 0;
+                animationTime = 0.0f;
+            }
+            
+            if (!IsKeyDown(KEY_A)){
+            if(IsKeyDown(KEY_D)) cameraOffset.x = cameraOffset.x + 1.0;
+            
+            cameraOffset.y = 350 - player.position.y;
+            }
+            timer += GetFrameTime();
+            Rectangle lixoRec = { lixo.position.x, lixo.position.y, (float)lixo.width, (float)lixo.height };
+            Rectangle playerRec = { player.position.x, player.position.y, (float)player.width, (float)player.height };
             // movimento com WASD
+        
             if (IsKeyDown(KEY_W)) player.position.y -= player.speed.y;
             if (IsKeyDown(KEY_S)) player.position.y += player.speed.y;
+
+            if(!CheckCollisionRecs(playerRec, lixoRec)) {
+
             if (IsKeyDown(KEY_A)) player.position.x -= player.speed.x;
             if (IsKeyDown(KEY_D)) player.position.x += player.speed.x;
+            lixo.position = {lixo.position.x - lixo.speed.x, lixo.position.y};
+            }
 
             // Limites da tela 
             if (player.position.x <= 0) player.position.x = 0;
-            if (player.position.x + player.width >= 1200) player.position.x = 1200 - player.width;
+            if (player.position.x >= limite_tela) player.position.x = 1200 - player.width;
             if (player.position.y <= 0) player.position.y = 0;
             if (player.position.y + player.height >= 700) player.position.y = 700 - player.height;
 
+            if (lixo.position.x + lixo.width <= 0) {
+                lixo.position.x = 1200;
+                lixo.position.y = 100 + lixo.position.y;
+                if (lixo.position.y + lixo.height >= 650) {
+                    lixo.position.y = 100;
+                }
+            }
+  
+                
             // Voltar ao menu
             if (IsKeyPressed(KEY_ESCAPE)) {
                 currentState = MENU;
+                // Retomar música quando voltar ao menu
+                if (!IsMusicStreamPlaying(menuMusic)) {
+                    PlayMusicStream(menuMusic);
+                }
             }
 
             BeginDrawing();
-            ClearBackground(RAYWHITE);
+            ClearBackground(DARKGREEN);
+      
+            // Desenha o asfalto (retângulos)
+            DrawRectangle(0, 100, 1200, 500, DARKGRAY);
+
+            // Bordas da pista
+            DrawRectangleLinesEx((Rectangle){-30, 100, 1500, 500}, 10, WHITE);
+
+            // Faixa central tracejada
+            for (int i = 30; i < 3600; i += 60) {
+                DrawRectangle(i - cameraOffset.x,340, 40, 20, YELLOW);
+            }
+
+            // Curvas (se quiser)
+
+            DrawText("Pista vista de cima", 10, 10, 30, WHITE);
+
+            if (timer < 5.0f) DrawText("Fase 1", 500, 30 , 60, GOLD);
+            
             DrawText("Use WASD pra mover o bloco!", 10, 10, 20, DARKGRAY);
-            DrawRectangleRec((Rectangle){player.position.x, player.position.y, player.width, player.height}, BLUE);
+            
+            // Desenhar jogador com sprite sheet animado
+            if (playerSpriteLoaded && playerSpriteSheet.id > 0) {
+                // Calcular retângulo do frame atual no sprite sheet
+                Rectangle frameRect = {
+                    currentFrame * playerFrameWidth,  // X: posição do frame no sprite sheet
+                    0.0f,                             // Y: sempre 0 (sprite sheet horizontal)
+                    playerFrameWidth,                 // Largura do frame
+                    (float)playerSpriteSheet.height   // Altura do frame
+                };
+                
+                // Desenhar o frame atual
+                DrawTextureRec(playerSpriteSheet, frameRect, 
+                              (Vector2){player.position.x, player.position.y}, WHITE);
+            } else {
+                // Fallback: desenhar retângulo azul
+                DrawRectangleRec((Rectangle){player.position.x, player.position.y, 
+                                            (float)player.width, (float)player.height}, BLUE);
+            }
+            
+            // Obstáculo (mantém retângulo vermelho)
+            DrawRectangleRec((Rectangle){lixo.position.x, lixo.position.y, 
+                                        (float)lixo.width, (float)lixo.height}, RED);
+            
             DrawText("teste movendo bloquinho!", 190, 550, 20, BLACK);
             DrawText("ESC - Menu", 10, 650, 20, GRAY);
+
+            if (CheckCollisionRecs(playerRec, lixoRec)) {
+            DrawText("Colidiu com o lixo!", 450, 350, 40, RED);
+            }   
             EndDrawing();
         }
     }
+    
+    // Descarregar música ao sair
+    if (musicLoaded) {
+        UnloadMusicStream(menuMusic);
+    }
+    // Descarregar recursos ao sair
+    if (playerSpriteLoaded && playerSpriteSheet.id > 0) {
+        UnloadTexture(playerSpriteSheet);
+    }
 }
+
