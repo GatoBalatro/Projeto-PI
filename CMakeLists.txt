@@ -93,3 +93,19 @@ if(WIN32)
         "${CMAKE_BINARY_DIR}/src/Dave-the-Diver-OST-On-the-boat.ogg"
     )
 endif()
+
+# Copiar sprite do jogador
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_SOURCE_DIR}/src/player.png"
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>
+)
+
+# Copiar também para pasta src
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+    "${CMAKE_BINARY_DIR}/src"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_SOURCE_DIR}/src/player.png"
+    "${CMAKE_BINARY_DIR}/src/player.png"
+)

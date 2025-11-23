@@ -9,6 +9,15 @@ Obstacle lixo;
 Music menuMusic;  // Adicione esta linha
 bool musicLoaded = false;  // Flag para controlar se a música já foi carregada
 
+// Variáveis para sprite sheet do jogador
+Texture2D playerSpriteSheet = {0};
+bool playerSpriteLoaded = false;
+int playerFrameCount = 8;  // 8 frames no sprite sheet
+float playerFrameWidth = 0.0f;  // Largura de cada frame
+float animationTime = 0.0f;  // Tempo para animação
+float animationSpeed = 0.15f;  // Velocidade da animação (ajuste conforme necessário)
+int currentFrame = 0;  // Frame atual da animação
+
 // Desenha o menu principal
 void DrawMenu() {
     BeginDrawing();
@@ -134,6 +143,46 @@ void RunGame() {
     float limite_tela = 1150.0f;
 
     float timer = 0.0f;
+    animationTime = 0.0f;  // Resetar animação
+    currentFrame = 0;
+
+    // Carregar sprite sheet do jogador (apenas uma vez)
+    if (!playerSpriteLoaded) {
+        const char* spritePaths[] = {
+            "player.png",                    // Pasta atual (build)
+            "src/player.png",               // Pasta src
+            "../src/player.png",            // Uma pasta acima
+            "sprites/player.png",           // Pasta sprites
+            "assets/player.png"             // Pasta assets
+        };
+        
+        bool loaded = false;
+        for (int i = 0; i < 5; i++) {
+            playerSpriteSheet = LoadTexture(spritePaths[i]);
+            if (playerSpriteSheet.id > 0 && playerSpriteSheet.width > 0) {
+                // Calcular largura de cada frame (sprite sheet horizontal com 8 frames)
+                playerFrameWidth = (float)playerSpriteSheet.width / playerFrameCount;
+                
+                // Ajustar tamanho do jogador baseado no frame
+                player.width = (int)playerFrameWidth;
+                player.height = playerSpriteSheet.height;
+                
+                playerSpriteLoaded = true;
+                loaded = true;
+                TraceLog(LOG_INFO, "Sprite sheet do jogador carregado de: %s", spritePaths[i]);
+                TraceLog(LOG_INFO, "Tamanho total: %dx%d | Frame: %.0fx%d", 
+                        playerSpriteSheet.width, playerSpriteSheet.height,
+                        playerFrameWidth, player.height);
+                break;
+            } else {
+                UnloadTexture(playerSpriteSheet);
+            }
+        }
+        
+        if (!loaded) {
+            TraceLog(LOG_WARNING, "Sprite sheet do jogador nao encontrado, usando retangulo azul");
+        }
+    }
 
     // Carregar música do menu (apenas uma vez)
     if (!musicLoaded) {
@@ -213,6 +262,23 @@ void RunGame() {
                 StopMusicStream(menuMusic);
             }
             
+            // Atualizar animação baseada no movimento
+            bool isMoving = IsKeyDown(KEY_W) || IsKeyDown(KEY_S) || 
+                            IsKeyDown(KEY_A) || IsKeyDown(KEY_D);
+            
+            if (isMoving) {
+                // Animar apenas quando o jogador está se movendo
+                animationTime += GetFrameTime();
+                if (animationTime >= animationSpeed) {
+                    currentFrame = (currentFrame + 1) % playerFrameCount;
+                    animationTime = 0.0f;
+                }
+            } else {
+                // Quando parado, manter no primeiro frame
+                currentFrame = 0;
+                animationTime = 0.0f;
+            }
+            
             if (!IsKeyDown(KEY_A)){
             if(IsKeyDown(KEY_D)) cameraOffset.x = cameraOffset.x + 1.0;
             
@@ -278,8 +344,30 @@ void RunGame() {
             if (timer < 5.0f) DrawText("Fase 1", 500, 30 , 60, GOLD);
             
             DrawText("Use WASD pra mover o bloco!", 10, 10, 20, DARKGRAY);
-            DrawRectangleRec((Rectangle){player.position.x, player.position.y, (float)player.width, (float)player.height}, BLUE);
-            DrawRectangleRec((Rectangle){lixo.position.x, lixo.position.y, (float)lixo.width, (float)lixo.height}, RED);
+            
+            // Desenhar jogador com sprite sheet animado
+            if (playerSpriteLoaded && playerSpriteSheet.id > 0) {
+                // Calcular retângulo do frame atual no sprite sheet
+                Rectangle frameRect = {
+                    currentFrame * playerFrameWidth,  // X: posição do frame no sprite sheet
+                    0.0f,                             // Y: sempre 0 (sprite sheet horizontal)
+                    playerFrameWidth,                 // Largura do frame
+                    (float)playerSpriteSheet.height   // Altura do frame
+                };
+                
+                // Desenhar o frame atual
+                DrawTextureRec(playerSpriteSheet, frameRect, 
+                              (Vector2){player.position.x, player.position.y}, WHITE);
+            } else {
+                // Fallback: desenhar retângulo azul
+                DrawRectangleRec((Rectangle){player.position.x, player.position.y, 
+                                            (float)player.width, (float)player.height}, BLUE);
+            }
+            
+            // Obstáculo (mantém retângulo vermelho)
+            DrawRectangleRec((Rectangle){lixo.position.x, lixo.position.y, 
+                                        (float)lixo.width, (float)lixo.height}, RED);
+            
             DrawText("teste movendo bloquinho!", 190, 550, 20, BLACK);
             DrawText("ESC - Menu", 10, 650, 20, GRAY);
 
@@ -293,6 +381,10 @@ void RunGame() {
     // Descarregar música ao sair
     if (musicLoaded) {
         UnloadMusicStream(menuMusic);
+    }
+    // Descarregar recursos ao sair
+    if (playerSpriteLoaded && playerSpriteSheet.id > 0) {
+        UnloadTexture(playerSpriteSheet);
     }
 }
 
