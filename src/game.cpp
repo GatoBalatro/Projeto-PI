@@ -1,6 +1,7 @@
 #include <raylib.h>
 #include "game.h" 
 #include <string.h>
+#include <stdio.h>  // Alternativa: usar stdio.h (versão C)
 
 GameState currentState = MENU;
 Player player;
@@ -38,11 +39,19 @@ void DrawMenu() {
     DrawText("SAIR", 565, 525, 32, DARKGRAY);
     
     if (musicLoaded) {
-        char info[256];
-        sprintf(info, "Musica: OK | Tocando: %s | Frames: %d", 
+        char info[512];
+        sprintf(info, "Musica: OK | FrameCount: %d | Tocando: %s | Tempo: %.1f/%.1f", 
+                menuMusic.frameCount,
                 IsMusicStreamPlaying(menuMusic) ? "SIM" : "NAO",
-                menuMusic.frameCount);
-        DrawText(info, 10, 50, 20, WHITE);
+                GetMusicTimePlayed(menuMusic),
+                GetMusicTimeLength(menuMusic));
+        DrawText(info, 10, 50, 18, WHITE);
+        
+        if (IsAudioDeviceReady()) {
+            DrawText("Audio Device: READY", 10, 70, 18, GREEN);
+        } else {
+            DrawText("Audio Device: NOT READY", 10, 70, 18, RED);
+        }
     } else {
         DrawText("Musica: NAO CARREGADA", 10, 50, 20, RED);
     }
@@ -128,33 +137,36 @@ void RunGame() {
 
     // Carregar música do menu (apenas uma vez)
     if (!musicLoaded) {
-        // Tentar múltiplos caminhos possíveis
+        // Tentar múltiplos caminhos possíveis (OGG tem melhor suporte)
         const char* musicPaths[] = {
-            "Dave the Diver OST - On the boat.mp3",           // Pasta atual
-            "src/Dave the Diver OST - On the boat.mp3",       // Pasta src
-            "../src/Dave the Diver OST - On the boat.mp3",    // Uma pasta acima
-            "build/Dave the Diver OST - On the boat.mp3",     // Pasta build
-            "../Dave the Diver OST - On the boat.mp3"         // Raiz do projeto
+            "Dave-the-Diver-OST-On-the-boat.ogg",              // Pasta atual (build)
+            "src/Dave-the-Diver-OST-On-the-boat.ogg",           // Pasta src
+            "../src/Dave-the-Diver-OST-On-the-boat.ogg",       // Uma pasta acima
+            "Dave the Diver OST - On the boat.ogg",            // Nome alternativo (se houver)
+            "src/Dave the Diver OST - On the boat.ogg",        // Nome alternativo em src
+            "Dave the Diver OST - On the boat.mp3",            // Fallback para MP3
+            "src/Dave the Diver OST - On the boat.mp3"         // Fallback MP3 em src
         };
         
         bool loaded = false;
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 7; i++) {
+            TraceLog(LOG_INFO, "Tentando carregar musica de: %s", musicPaths[i]);
             menuMusic = LoadMusicStream(musicPaths[i]);
             if (menuMusic.frameCount > 0) {
-                SetMusicVolume(menuMusic, 0.5f);
+                SetMusicVolume(menuMusic, 0.7f);  // Volume 70%
                 musicLoaded = true;
                 loaded = true;
-                TraceLog(LOG_INFO, "Musica carregada com sucesso de: %s", musicPaths[i]);
+                TraceLog(LOG_INFO, "SUCCESS: Musica carregada de: %s", musicPaths[i]);
                 TraceLog(LOG_INFO, "FrameCount: %d, SampleRate: %d", menuMusic.frameCount, menuMusic.stream.sampleRate);
                 break;
             } else {
-                TraceLog(LOG_WARNING, "Falha ao carregar musica de: %s (FrameCount: %d)", musicPaths[i], menuMusic.frameCount);
+                TraceLog(LOG_WARNING, "Falha: %s (FrameCount: %d)", musicPaths[i], menuMusic.frameCount);
             }
         }
         
         if (!loaded) {
             TraceLog(LOG_ERROR, "ERRO: Nao foi possivel carregar a musica em nenhum caminho!");
-            TraceLog(LOG_ERROR, "Verifique se o arquivo MP3 esta na pasta correta.");
+            TraceLog(LOG_ERROR, "Verifique se o arquivo OGG esta na pasta src/ ou build/");
         }
     }
 

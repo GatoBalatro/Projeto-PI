@@ -68,7 +68,7 @@ if(WIN32)
     )
 endif()
 
-# Copiar DLLs para a pasta do executável
+# Copiar DLLs e música para a pasta do executável
 if(WIN32)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -77,10 +77,19 @@ if(WIN32)
         $<TARGET_FILE_DIR:${PROJECT_NAME}>
     )
     
-    # Copiar música também
+    # Copiar música OGG
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/src/Dave the Diver OST - On the boat.mp3"
+        "${CMAKE_SOURCE_DIR}/src/Dave-the-Diver-OST-On-the-boat.ogg"
         $<TARGET_FILE_DIR:${PROJECT_NAME}>
+    )
+    
+    # Copiar música OGG também para pasta src relativa (caso o executável rode de outra pasta)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+        "${CMAKE_BINARY_DIR}/src"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/src/Dave-the-Diver-OST-On-the-boat.ogg"
+        "${CMAKE_BINARY_DIR}/src/Dave-the-Diver-OST-On-the-boat.ogg"
     )
 endif()
