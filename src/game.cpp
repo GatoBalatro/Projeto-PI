@@ -18,6 +18,10 @@ float animationTime = 0.0f;
 const float animationSpeed = 0.15f;
 int currentFrame = 0;
 
+float scrollOffset = 0.0f;
+int currentFase = 1;
+bool faseComplete = false;
+
 // Forward declarations
 void LoadPlayerSprite();
 void LoadMenuMusic();
@@ -32,11 +36,13 @@ void InitGame();
 void HandleInput();
 void UpdateGame();
 void UpdateGame(float dt);
-void DrawGame(float timer, const Vector2& cameraOffset, bool updateFarX);
+void DrawGame(Vector2& cameraOffset, float timer);
 void CleanupGame();
 void DrawMenu();
 void DrawCredits();
 void HandleMenuInput();
+void ResetGame();
+void UpdateScroll(float dt);
 // Main game loop (now clean and readable!)
 
 void RunGame() {
@@ -54,11 +60,11 @@ void RunGame() {
         HandleInput();           // Global input (ESC, menu navigation)
         UpdateGame(dt);          // Game logic (only when in GAME state)
         
-        if (currentState == GAME) {
-            UpdateCamera(cameraOffset, position_x_mais_longe);
-        }
+        // if (currentState == GAME) {
+        //     UpdateCamera(cameraOffset, position_x_mais_longe);
+        // }
 
-        DrawGame(timer, cameraOffset, position_x_mais_longe < player.position.x);
+        DrawGame(cameraOffset, timer);
         
         position_x_mais_longe = fmaxf(position_x_mais_longe, player.position.x);
     }
@@ -67,6 +73,7 @@ void RunGame() {
 }
 
 void InitGame() {
+    ResetGame();
     player = { {400, 300}, {2.0f, 2.0f}, 50, 50 };
     lixo = { {1000, 200}, {2.0f, 2.0f}, 30, 30 };
 
@@ -140,7 +147,7 @@ void HandleInput() {
 void UpdateGame(float dt) {
     if (currentState != GAME) return;
 
-    // Update music only in menu/credits
+    // Music handling (existing)
     if (musicLoaded) {
         if (currentState == MENU || currentState == CREDITS) {
             if (!IsMusicStreamPlaying(menuMusic)) PlayMusicStream(menuMusic);
@@ -148,6 +155,14 @@ void UpdateGame(float dt) {
         } else {
             StopMusicStream(menuMusic);
         }
+    }
+
+    UpdateScroll(dt);
+
+    if (faseComplete && IsKeyPressed(KEY_ENTER)) {
+        currentFase++;
+        ResetGame();  // Resets scroll=0, lixo, etc. (but keeps fase++)
+        TraceLog(LOG_INFO, "Iniciando Fase %d", currentFase);
     }
 
     UpdatePlayer();
@@ -158,27 +173,31 @@ void UpdateGame(float dt) {
 void UpdatePlayer() {
     if (currentState != GAME) return;
 
+    // Vertical ALWAYS (W/S)
     if (IsKeyDown(KEY_W)) player.position.y -= player.speed.y;
     if (IsKeyDown(KEY_S)) player.position.y += player.speed.y;
 
+    // Collision check (SCREEN coords - NO scrollOffset!)
     Rectangle playerRec = { player.position.x, player.position.y, (float)player.width, (float)player.height };
     Rectangle lixoRec = { lixo.position.x, lixo.position.y, (float)lixo.width, (float)lixo.height };
-
     bool colliding = CheckCollisionRecs(playerRec, lixoRec);
 
+    // ORIGINAL LOGIC: Horizontal A/D + lixo move ONLY if !colliding → "STOPS" on hit
     if (!colliding) {
         if (IsKeyDown(KEY_A)) player.position.x -= player.speed.x;
         if (IsKeyDown(KEY_D)) player.position.x += player.speed.x;
-        lixo.position.x -= lixo.speed.x;
+        lixo.position.x -= lixo.speed.x;  // Lixo pauses too!
     }
 
-    // Screen bounds
+    // Bounds (full screen width)
     player.position.x = fmaxf(0, fminf(player.position.x, 1200 - player.width));
     player.position.y = fmaxf(0, fminf(player.position.y, 700 - player.height));
 }
 
 void UpdateObstacles() {
-    if (lixo.position.x + lixo.width <= 0) {
+    lixo.position.x -= 50.0f * GetFrameTime();
+
+   if (lixo.position.x + lixo.width <= 0) {
         lixo.position.x = 1200;
         lixo.position.y += 100;
         if (lixo.position.y + lixo.height >= 650) {
@@ -211,7 +230,7 @@ void UpdateCamera(Vector2& cameraOffset, float& position_x_mais_longe) {
 }
 
 // ======================== RENDERING ========================
-void DrawGame(float timer, const Vector2& cameraOffset, bool updateFarX) {
+void DrawGame(Vector2& cameraOffset, float timer){  
     BeginDrawing();
     ClearBackground(DARKGREEN);
 
@@ -222,26 +241,53 @@ void DrawGame(float timer, const Vector2& cameraOffset, bool updateFarX) {
         DrawCredits();
     }
     else if (currentState == GAME) {
-        DrawWorld(cameraOffset);
+        // Apply camera (player stays near center)
+        BeginMode2D((Camera2D){ 
+            .offset = {600, 350}, 
+            .target = {player.position.x, player.position.y}, 
+            .rotation = 0.0f, 
+            .zoom = 1.0f 
+        });
+
+        DrawWorld(cameraOffset);  // Camera follows player
         DrawPlayer();
-        DrawRectangleRec({lixo.position.x, lixo.position.y, (float)lixo.width, (float)lixo.height}, RED);
-        DrawUI(timer);
+        DrawRectangleRec({
+            lixo.position.x, lixo.position.y, 
+            (float)lixo.width, (float)lixo.height
+        }, RED);
+
+        EndMode2D();
+
+        DrawUI(timer);  // UI always on top (no camera)
     }
 
     EndDrawing();
 }
 
 void DrawWorld(const Vector2& cameraOffset) {
-    // Road
+   // Road & borders FIXED (infinite gray road)
     DrawRectangle(0, 100, 1200, 500, DARKGRAY);
-    DrawRectangleLinesEx({-30, 100, 1500, 500}, 10, WHITE);
+    DrawRectangleLinesEx({-30, 100, 1250, 500}, 10, WHITE);
 
-    // Dashed center line
+    // FIXED: Yellow stripes scroll LEFT, END at 3600px (finite track)
     for (int i = 30; i < 3600; i += 60) {
-        DrawRectangle(i - cameraOffset.x, 340, 40, 20, YELLOW);
+        float screenX = (float)i - scrollOffset;
+        if (screenX > -100.0f && screenX < 1300.0f) {
+            DrawRectangle(screenX, 340, 40, 20, YELLOW);
+        }
+    }
+
+    // NEW: Finish line appears near end, scrolls left
+    if (scrollOffset > 3400.0f) {
+        float finishX = 3600.0f - scrollOffset;
+        DrawRectangle(finishX, 150, 20, 300, WHITE);
+        DrawRectangleLinesEx({finishX, 150, 20, 300}, 4, BLACK);
+        DrawRectangle(finishX + 8, 150, 4, 300, BLACK);  // Checkered effect
+        DrawText("FINISH!", (int)(finishX - 40), 200, 40, GREEN);
     }
 
     DrawText("Pista vista de cima", 10, 10, 30, WHITE);
+    DrawText(TextFormat("Fase: %d", currentFase), 1000, 10, 30, GOLD);
 }
 
 void DrawPlayer() {
@@ -259,15 +305,17 @@ void DrawPlayer() {
 }
 
 void DrawUI(float timer) {
-    if (timer < 5.0f) DrawText("Fase 1", 500, 30, 60, GOLD);
-    DrawText("Use WASD pra mover o bloco!", 10, 40, 20, WHITE);
+    if (timer < 5.0f) DrawText(TextFormat("Fase %d", currentFase), 500, 30, 60, GOLD);
+    DrawText("Use W/S pra mover verticalmente!", 10, 40, 20, WHITE);  
     DrawText("ESC - Menu", 10, 650, 20, GRAY);
 
     Rectangle playerRec = {player.position.x, player.position.y, (float)player.width, (float)player.height};
-    Rectangle lixoRec = {lixo.position.x, lixo.position.y, (float)lixo.width, (float)lixo.height};
+    Rectangle lixoRec = {lixo.position.x - scrollOffset, lixo.position.y, (float)lixo.width, (float)lixo.height};
 
     if (CheckCollisionRecs(playerRec, lixoRec)) {
-        DrawText("Colidiu com o lixo!", 450, 350, 40, RED);
+        DrawText("Colidiu com o lixo! Fase reiniciada.", 350, 350, 30, RED);
+        currentFase = 1;
+        scrollOffset = 0.0f;
     }
 }
 
@@ -354,6 +402,7 @@ void HandleMenuInput() {
         Rectangle btnBack = {500, 550, 200, 60};
         
         if (CheckCollisionPointRec(mouse, btnPlay) || IsKeyPressed(KEY_ONE)) {
+            ResetGame();  // ← NEW: Fresh start each game!
             currentState = GAME;
         }
         else if (CheckCollisionPointRec(mouse, btnCredits) || IsKeyPressed(KEY_TWO)) {
@@ -365,5 +414,36 @@ void HandleMenuInput() {
         else if (currentState == CREDITS && CheckCollisionPointRec(mouse, btnBack)) {
             currentState = MENU;
         }
+    }
+}
+
+void ResetGame() {
+    player.position = {400, 300};
+    player.speed = {2.0f, 2.0f};
+    player.width = 50;
+    player.height = 50;
+    
+    lixo.position = {1000, 200};
+    lixo.speed = {2.0f, 2.0f};
+    lixo.width = 30;
+    lixo.height = 30;
+    
+    scrollOffset = 0.0f;
+    currentFase = 1;
+    faseComplete = false;
+    animationTime = 0.0f;
+    currentFrame = 0;
+}
+
+void UpdateScroll(float dt) {
+    if (currentState != GAME || faseComplete) return;
+    
+    const float scrollSpeed = 100.0f;
+    scrollOffset += scrollSpeed * dt;
+    
+    // Detect end of fase (dashed lines "end")
+    if (scrollOffset >= 3550.0f && !faseComplete) {
+        faseComplete = true;
+        TraceLog(LOG_INFO, "Fase %d completa!", currentFase);
     }
 }
