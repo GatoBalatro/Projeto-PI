@@ -6,8 +6,10 @@
 GameState currentState = MENU;
 Player player;
 Obstacle lixo;
-Music menuMusic;  // Adicione esta linha
+Music menuMusic;  // Música do menu
 bool musicLoaded = false;  // Flag para controlar se a música já foi carregada
+Music gameMusic;  // Música da fase do jogo
+bool gameMusicLoaded = false;  // Flag para controlar se a música da fase foi carregada
 
 // Variáveis para sprite sheet do jogador
 Texture2D playerSpriteSheet = {0};
@@ -219,6 +221,38 @@ void RunGame() {
         }
     }
 
+    // Carregar música da fase do jogo (apenas uma vez)
+    if (!gameMusicLoaded) {
+        const char* gameMusicPaths[] = {
+            "Pizza-Tower-OST-Thousand-March-_WAR_.ogg",              // Pasta atual (build)
+            "src/Pizza-Tower-OST-Thousand-March-_WAR_.ogg",           // Pasta src
+            "../src/Pizza-Tower-OST-Thousand-March-_WAR_.ogg",       // Uma pasta acima
+            "Pizza-Tower-OST-Thousand-March-(WAR).ogg",              // Nome alternativo
+            "src/Pizza-Tower-OST-Thousand-March-(WAR).ogg"            // Nome alternativo em src
+        };
+        
+        bool loaded = false;
+        for (int i = 0; i < 5; i++) {
+            TraceLog(LOG_INFO, "Tentando carregar musica da fase de: %s", gameMusicPaths[i]);
+            gameMusic = LoadMusicStream(gameMusicPaths[i]);
+            if (gameMusic.frameCount > 0) {
+                SetMusicVolume(gameMusic, 0.7f);  // Volume 70%
+                gameMusicLoaded = true;
+                loaded = true;
+                TraceLog(LOG_INFO, "SUCCESS: Musica da fase carregada de: %s", gameMusicPaths[i]);
+                TraceLog(LOG_INFO, "FrameCount: %d, SampleRate: %d", gameMusic.frameCount, gameMusic.stream.sampleRate);
+                break;
+            } else {
+                TraceLog(LOG_WARNING, "Falha: %s (FrameCount: %d)", gameMusicPaths[i], gameMusic.frameCount);
+            }
+        }
+        
+        if (!loaded) {
+            TraceLog(LOG_WARNING, "AVISO: Nao foi possivel carregar a musica da fase!");
+            TraceLog(LOG_WARNING, "O jogo continuara sem musica de fundo na fase.");
+        }
+    }
+
     while (!WindowShouldClose()) {
 
         if(position_x_mais_longe < player.position.x) {
@@ -257,9 +291,18 @@ void RunGame() {
             DrawCredits();
         }
         else if (currentState == GAME) {
-            // Parar música quando entrar no jogo
+            // Parar música do menu quando entrar no jogo
             if (IsMusicStreamPlaying(menuMusic)) {
                 StopMusicStream(menuMusic);
+            }
+            
+            // Tocar música da fase se foi carregada
+            if (gameMusicLoaded && gameMusic.frameCount > 0) {
+                if (!IsMusicStreamPlaying(gameMusic)) {
+                    PlayMusicStream(gameMusic);
+                    TraceLog(LOG_INFO, "Musica da fase iniciada");
+                }
+                UpdateMusicStream(gameMusic);  // Atualiza o stream de música da fase
             }
             
             // Atualizar animação baseada no movimento
@@ -316,9 +359,13 @@ void RunGame() {
                 
             // Voltar ao menu
             if (IsKeyPressed(KEY_ESCAPE)) {
+                // Parar música da fase
+                if (IsMusicStreamPlaying(gameMusic)) {
+                    StopMusicStream(gameMusic);
+                }
                 currentState = MENU;
-                // Retomar música quando voltar ao menu
-                if (!IsMusicStreamPlaying(menuMusic)) {
+                // Retomar música do menu quando voltar
+                if (musicLoaded && !IsMusicStreamPlaying(menuMusic)) {
                     PlayMusicStream(menuMusic);
                 }
             }
@@ -378,9 +425,12 @@ void RunGame() {
         }
     }
     
-    // Descarregar música ao sair
+    // Descarregar músicas ao sair
     if (musicLoaded) {
         UnloadMusicStream(menuMusic);
+    }
+    if (gameMusicLoaded) {
+        UnloadMusicStream(gameMusic);
     }
     // Descarregar recursos ao sair
     if (playerSpriteLoaded && playerSpriteSheet.id > 0) {

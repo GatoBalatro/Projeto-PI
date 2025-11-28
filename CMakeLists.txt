@@ -92,6 +92,20 @@ if(WIN32)
         "${CMAKE_SOURCE_DIR}/src/Dave-the-Diver-OST-On-the-boat.ogg"
         "${CMAKE_BINARY_DIR}/src/Dave-the-Diver-OST-On-the-boat.ogg"
     )
+    
+    # Copiar música da fase (Pizza Tower OST)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/src/Pizza-Tower-OST-Thousand-March-_WAR_.ogg"
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>
+    )
+    
+    # Copiar música da fase para pasta src também
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/src/Pizza-Tower-OST-Thousand-March-_WAR_.ogg"
+        "${CMAKE_BINARY_DIR}/src/Pizza-Tower-OST-Thousand-March-_WAR_.ogg"
+    )
 endif()
 
 # Copiar sprite do jogador
