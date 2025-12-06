@@ -145,23 +145,28 @@ void HandleInput() {
 }
 
 void UpdateGame(float dt) {
-    if (currentState != GAME) return;
-
-    // Music handling (existing)
+    // --- 1. Global Updates (Run regardless of state) ---
+    
+    // Music handling
     if (musicLoaded) {
         if (currentState == MENU || currentState == CREDITS) {
-            if (!IsMusicStreamPlaying(menuMusic)) PlayMusicStream(menuMusic);
-            UpdateMusicStream(menuMusic);
+            if (!IsMusicStreamPlaying(menuMusic)) {
+                PlayMusicStream(menuMusic);
+            }
+            UpdateMusicStream(menuMusic); // This keeps the music buffer filling
         } else {
+            // Stop music when actually playing the game (based on your original logic)
             StopMusicStream(menuMusic);
         }
     }
+
+    if (currentState != GAME) return;
 
     UpdateScroll(dt);
 
     if (faseComplete && IsKeyPressed(KEY_ENTER)) {
         currentFase++;
-        ResetGame();  // Resets scroll=0, lixo, etc. (but keeps fase++)
+        ResetGame(); 
         TraceLog(LOG_INFO, "Iniciando Fase %d", currentFase);
     }
 
