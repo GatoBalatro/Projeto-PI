@@ -4,7 +4,10 @@
 // Estados do jogo
 typedef enum {
     MENU = 0,
-    GAME,
+    FASE_CORRIDA,
+    FASE_CICLISMO,
+    FASE_NATACAO,
+    GAME_OVER,
     CREDITS
 } GameState;
 
@@ -14,7 +17,16 @@ typedef struct {
     Vector2 speed;
     int width;
     int height;
+    int life;
 } Player;
+
+typedef struct {
+    Vector2 position;
+    Vector2 speed;
+    int width;
+    int height;
+} NPC;
+
 
 typedef struct {
     Vector2 position;
