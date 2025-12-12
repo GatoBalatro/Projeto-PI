@@ -24,11 +24,11 @@ void RunGame() {
         timer += dt;
 
         BeginDrawing();
-        ClearBackground(BLACK);
 
         switch (currentState) {
 
             case MENU:
+                ClearBackground(DARKGREEN);
                 // Tocar música do menu se foi carregada
                 if (musicLoaded && menuMusic.frameCount > 0) {
                     if (!IsMusicStreamPlaying(menuMusic)) {
@@ -45,9 +45,18 @@ void RunGame() {
                 if (IsMusicStreamPlaying(menuMusic)) {
                     StopMusicStream(menuMusic);
                 }
-                UpdateGame(dt);   // <-- atualiza player, obstáculos, animação, etc.
+                HandleInput();  // Processar input (ESC para voltar ao menu)
+                UpdateGame(dt);   // <-- atualiza player, obstáculos, animação, música, etc.
                 DrawGame(cameraOffset, timer); 
                 position_x_mais_longe = fmaxf(position_x_mais_longe, player.position.x);
+                
+                // Verificar transição de fase após renderização (evita frame perdido)
+                // shouldTransitionToNatacao é definida em fase_corrida.h (já incluído)
+                if (shouldTransitionToNatacao) {
+                    shouldTransitionToNatacao = false;
+                    currentState = FASE_NATACAO;
+                    TraceLog(LOG_INFO, "Transição para FASE_NATACAO realizada");
+                }
                 break;
 
             case FASE_NATACAO:
@@ -55,10 +64,11 @@ void RunGame() {
                 if (IsMusicStreamPlaying(menuMusic)) {
                     StopMusicStream(menuMusic);
                 }
-                fase_natacao();   // fase ainda WIP
+                fase_natacao();   // fase ainda WIP (tem seu próprio loop)
                 break;
 
             case FASE_CICLISMO:
+                ClearBackground(BLACK);
                 // Parar música do menu quando entrar na fase
                 if (IsMusicStreamPlaying(menuMusic)) {
                     StopMusicStream(menuMusic);
@@ -67,6 +77,7 @@ void RunGame() {
                 break;
 
             case CREDITS:
+                ClearBackground(BLACK);
                 // Continuar música do menu nos créditos
                 if (musicLoaded && menuMusic.frameCount > 0) {
                     if (!IsMusicStreamPlaying(menuMusic)) {
@@ -79,6 +90,7 @@ void RunGame() {
                 break;
 
             case GAME_OVER:
+                ClearBackground(BLACK);
                 DrawText("GAME OVER", 350, 350, 50, RED);
                 break;
         }
