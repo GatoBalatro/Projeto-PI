@@ -90,6 +90,8 @@ cmake --build . --config Release
 ### Linux
 ```bash
 # Executar script de build
+sh run_linux.sh
+- ou -
 chmod +x run_linux.sh
 ./run_linux.sh
 
