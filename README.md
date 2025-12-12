@@ -270,7 +270,7 @@ Este projeto está licenciado sob a Mozilla Public License 2.0. Veja o arquivo `
 
 ## 🙏 Agradecimentos
 
-- **Raylib**: https://www.raylib.com/ - Biblioteca gráfica incrível
+- **Raylib**: https://www.raylib.com/ - Biblioteca gráfica 
 - **Música do Menu**: "Dave the Diver OST - On the boat"
 - **Música da Natação**: Ghost Data - Beach Episode
 - **SFX**: "Cartoon Bite Sound Effect"
