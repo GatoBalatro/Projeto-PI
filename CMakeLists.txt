@@ -147,3 +147,16 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     "${CMAKE_SOURCE_DIR}/src/water.ogg"
     "${CMAKE_BINARY_DIR}/src/water.ogg"
 )
+
+# Copiar SFX de colisão
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_SOURCE_DIR}/src/cartoon_bite_sound_effect.mp3"
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>
+)
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_SOURCE_DIR}/src/cartoon_bite_sound_effect.mp3"
+    "${CMAKE_BINARY_DIR}/src/cartoon_bite_sound_effect.mp3"
+)

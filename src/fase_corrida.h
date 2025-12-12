@@ -26,8 +26,13 @@ float scrollOffset = 0.0f;
 int currentFase = 1;
 bool faseComplete = false;
 
+// Variáveis para SFX de colisão
+Sound collisionSound = {0};
+bool collisionSoundLoaded = false;
+bool wasColliding = false;  // Flag para rastrear colisão anterior
 
 void LoadPlayerSprite();
+void LoadCollisionSound();
 void UpdatePlayer();
 void UpdateObstacles();
 void UpdateAnimation(float dt);
@@ -52,6 +57,8 @@ void InitGame() {
 
 
     LoadPlayerSprite();
+    LoadCollisionSound();  // Adicione esta linha
+    wasColliding = false;  // Resetar flag de colisão
 }
 
 void LoadPlayerSprite() {
@@ -76,6 +83,26 @@ void LoadPlayerSprite() {
         UnloadTexture(tex);
     }
     TraceLog(LOG_WARNING, "Failed to load player sprite, using fallback rectangle");
+}
+
+void LoadCollisionSound() {
+    if (collisionSoundLoaded) return;
+
+    const char* soundPaths[] = {
+        "cartoon_bite_sound_effect.mp3", "src/cartoon_bite_sound_effect.mp3", 
+        "../src/cartoon_bite_sound_effect.mp3", "assets/cartoon_bite_sound_effect.mp3"
+    };
+
+    for (int i = 0; i < 4; i++) {
+        collisionSound = LoadSound(soundPaths[i]);
+        if (collisionSound.frameCount > 0) {
+            SetSoundVolume(collisionSound, 0.7f);  // Volume 70%
+            collisionSoundLoaded = true;
+            TraceLog(LOG_INFO, "SFX de colisao carregado: %s", soundPaths[i]);
+            return;
+        }
+    }
+    TraceLog(LOG_WARNING, "Falha ao carregar SFX de colisao");
 }
 
 
@@ -129,6 +156,12 @@ void UpdatePlayer() {
     }
     
     bool colliding = CheckCollisionRecs(playerRec, lixoRec);
+
+    // Tocar SFX de colisão quando detectar nova colisão
+    if (colliding && !wasColliding && collisionSoundLoaded) {
+        PlaySound(collisionSound);
+    }
+    wasColliding = colliding;  // Atualizar flag para próxima frame
 
     // ORIGINAL LOGIC: Horizontal A/D + lixo move ONLY if !colliding → "STOPS" on hit
     if (IsKeyDown(KEY_A)) player.position.x -= player.speed.x;
@@ -276,6 +309,7 @@ void DrawUI(float timer) {
 
 void CleanupGame() {
     if (playerSpriteLoaded) UnloadTexture(playerSpriteSheet);
+    if (collisionSoundLoaded && collisionSound.frameCount > 0) UnloadSound(collisionSound);
 }
 
 // ======================== FUNÇÕES DO MENU (NÃO REMOVA!) ========================
@@ -325,6 +359,7 @@ void ResetGame() {
     // faseComplete = false;
     // animationTime = 0.0f;
     // currentFrame = 0;
+    wasColliding = false;  // Resetar flag de colisão ao reiniciar
 }
 
 void UpdateScroll(float dt) {

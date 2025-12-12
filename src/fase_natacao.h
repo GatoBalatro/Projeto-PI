@@ -33,6 +33,11 @@ void fase_natacao(){
     Music waterMusic; 
     bool musicLoaded = false; 
 
+    // Variáveis para SFX de colisão
+    Sound collisionSound = {0};
+    bool collisionSoundLoaded = false;
+    bool wasColliding = false;  // Flag para rastrear colisão anterior
+
     bool playerImune = false;
     float invencivelTimer = 0.0f;
     const float invencivelDuration = 1.0f; // 1 segundo imune
@@ -123,6 +128,29 @@ void fase_natacao(){
         } 
     } 
 
+    // --------------------------- // CARREGAR SFX DE COLISÃO // --------------------------- 
+    if (!collisionSoundLoaded) {
+        const char* soundPaths[] = { 
+            "cartoon_bite_sound_effect.mp3", 
+            "src/cartoon_bite_sound_effect.mp3", 
+            "../src/cartoon_bite_sound_effect.mp3", 
+            "assets/cartoon_bite_sound_effect.mp3" 
+        };
+        
+        for (int i = 0; i < 4; i++) {
+            collisionSound = LoadSound(soundPaths[i]);
+            if (collisionSound.frameCount > 0) {
+                SetSoundVolume(collisionSound, 0.7f);  // Volume 70%
+                collisionSoundLoaded = true;
+                TraceLog(LOG_INFO, "SFX de colisao carregado: %s", soundPaths[i]);
+                break;
+            }
+        }
+        if (!collisionSoundLoaded) {
+            TraceLog(LOG_WARNING, "Falha ao carregar SFX de colisao");
+        }
+    }
+
     // --------------------------- // LOOP DA FASE DE NATAÇÃO // --------------------------- 
 
 
@@ -204,6 +232,12 @@ void fase_natacao(){
         bool colisao = CheckCollisionRecs(rPlayer, rtubarao); 
         colisao = colisao || CheckCollisionRecs(rPlayer, rtubarao_2); 
         colisao = colisao || CheckCollisionRecs(rPlayer, rtubarao_3);
+
+        // Tocar SFX de colisão quando detectar nova colisão
+        if (colisao && !wasColliding && collisionSoundLoaded) {
+            PlaySound(collisionSound);
+        }
+        wasColliding = colisao;  // Atualizar flag para próxima frame
 
         // --------------------------- // DESENHO // --------------------------- 
 
@@ -307,6 +341,6 @@ void fase_natacao(){
 
     if (musicLoaded) UnloadMusicStream(waterMusic); 
     if (playerSpriteLoaded) UnloadTexture(playerSpriteSheet);
-    if (tubaraoSpriteLoaded && tubaraoSpriteSheet.id > 0) UnloadTexture(tubaraoSpriteSheet); 
-
+    if (tubaraoSpriteLoaded && tubaraoSpriteSheet.id > 0) UnloadTexture(tubaraoSpriteSheet);
+    if (collisionSoundLoaded && collisionSound.frameCount > 0) UnloadSound(collisionSound);
 }
