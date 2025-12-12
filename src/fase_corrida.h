@@ -6,6 +6,8 @@
 #include "fase_natacao.h"
 #include "menu.h"
 
+#define MAX_X_POSITION 30000;
+
 Player player;
 Obstacle lixo;
 Texture2D playerSpriteSheet = {0};
@@ -48,6 +50,7 @@ bool victorySoundLoaded = false;
 // Variáveis para música da fase de corrida
 Music gameMusic = {0};
 bool gameMusicLoaded = false;
+
 
 void LoadPlayerSprite();
 void LoadRatoSprite();
@@ -305,8 +308,8 @@ void UpdatePlayer() {
 
     // Bounds (full screen width)
     player.position.y = fmaxf(0, fminf(player.position.y, 700 - player.height));
-
-      if (player.position.x > 30000) {
+      int max_pos = MAX_X_POSITION;
+      if (player.position.x > max_pos){
         // Tocar som de vitória ao completar a fase
         if (victorySoundLoaded && victorySound.frameCount > 0) {
             PlaySound(victorySound);
@@ -345,6 +348,39 @@ void UpdateCamera(Vector2& cameraOffset, float& position_x_mais_longe) {
 }
 
 // ======================== RENDERING ========================
+
+void DrawMovingYellowStripes(Vector2 cameraOffset, int screenWidth, int screenHeight) {
+    const int roadY = 100;
+    const int roadHeight = 500;
+    
+    const int stripeWidth = 140;
+    const int stripeHeight = 28;
+    const int gap = 200;                 // Distance between stripes
+    const float parallaxFactor = 1.1f;   
+
+    // Use camera offset as the scrolling source 
+    float scroll = cameraOffset.x * parallaxFactor;
+    float offset = fmodf(scroll, gap);
+    if (offset < 0) offset += gap;
+    int max_pos = MAX_X_POSITION;
+    // Number of stripes needed to cover screen + buffer
+    int stripesNeeded = (max_pos / gap) + 4;
+
+    for (int i = -2; i < stripesNeeded; i++) {
+        float worldX = i * gap;
+        float screenX = worldX - offset;
+
+        // Only draw stripes on the road
+        if (screenX > -stripeWidth ) {
+            int y = roadY + roadHeight/2 - stripeHeight/2;
+
+            DrawRectangle((int)screenX, y, stripeWidth, stripeHeight, YELLOW);
+            DrawRectangleLinesEx((Rectangle){screenX, (float)y, (float)stripeWidth, (float)stripeHeight}, 3, BLACK);
+        
+        }
+    }
+}
+
 void DrawGame(Vector2& cameraOffset, float timer){  
     // Não chamar BeginDrawing/EndDrawing aqui - já são chamados no loop principal
     // ClearBackground também é chamado no loop principal antes desta função
@@ -361,7 +397,22 @@ void DrawGame(Vector2& cameraOffset, float timer){
 
         DrawWorld(cameraOffset);  // Camera follows player
         DrawPlayer();
+
+        // Get dynamic screen dimensions
+        int screenWidth = GetScreenWidth();
+        int screenHeight = GetScreenHeight();
         
+        BeginMode2D((Camera2D){ 
+            .offset = {600, 350}, 
+            .target = {player.position.x, 350}, 
+            .rotation = 0.0f, 
+            .zoom = 1.0f 
+        });
+
+        
+        DrawWorld(cameraOffset);
+        DrawMovingYellowStripes( cameraOffset, screenWidth, screenHeight);
+        DrawPlayer();
         // Desenhar rato com sprite ou retângulo vermelho como fallback
         if (ratoSpriteLoaded && ratoSpriteSheet.id > 0) {
             Rectangle ratoFrameRect = {
@@ -394,8 +445,9 @@ void DrawGame(Vector2& cameraOffset, float timer){
 void DrawWorld(const Vector2& cameraOffset) {
 
     // Tamanho da pista: 30000px de comprimento
-    DrawRectangle(-200, 100, 30000, 500, DARKGRAY);
-    DrawRectangleLinesEx({-200, 100, 30000, 500}, 10, WHITE);
+    int max_pos = MAX_X_POSITION;
+    DrawRectangle(-200, 100, max_pos, 500, DARKGRAY);
+    DrawRectangleLinesEx({-200, 100, (float)max_pos, 500}, 10, WHITE);
 
     float finishX = 29800.0f;   // posição real no mundo
 

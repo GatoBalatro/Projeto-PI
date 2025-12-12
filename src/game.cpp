@@ -37,7 +37,7 @@ void RunGame() {
                     UpdateMusicStream(menuMusic);  // Atualiza o stream de música
                 }
                 HandleInput();
-                DrawMenu();       // <-- você tinha esquecido
+                DrawMenu();      
                 break;
 
             case FASE_CORRIDA:
@@ -67,7 +67,7 @@ void RunGame() {
                 fase_natacao();   // fase ainda WIP (tem seu próprio loop)
                 break;
 
-            case FASE_CICLISMO:
+            case FASE_CICLISMO: // terceira fase acabou ficando de fora do projeto por termos ficado com apenas 3 membros no grupo 
                 ClearBackground(BLACK);
                 // Parar música do menu quando entrar na fase
                 if (IsMusicStreamPlaying(menuMusic)) {
