@@ -79,8 +79,8 @@ void UpdateScroll(float dt);
 void InitGame() {
     ResetGame();
     player = { {400, 300}, {2.0f, 2.0f}, 50, 70 };
-    lixo = { {1000, 200}, {1.20f, 1.20f}, 30, 30 };
-    player.life = 3;
+    lixo = { {1000, 200}, {1.30f, 1.30f}, 30, 30 };
+    player.life = 25;
 
     livesTimer = 0.0f;
     LoadPlayerSprite();
@@ -268,14 +268,14 @@ void UpdatePlayer() {
     if (IsKeyDown(KEY_S)) player.position.y += player.speed.y;
 
     // Collision check (SCREEN coords - NO scrollOffset!)
-    Rectangle playerRec = { player.position.x, player.position.y, (float)player.width, (float)player.height };
-    Rectangle lixoRec = { lixo.position.x, lixo.position.y, (float)lixo.width, (float)lixo.height };
+    Rectangle playerRec = { player.position.x, player.position.y, (float)player.width/1.5, (float)player.height/1.5 };
+    Rectangle lixoRec = { lixo.position.x + 100, lixo.position.y+50, (float)lixo.width/1.3, (float)lixo.height/2.4 };
     bool colliding = CheckCollisionRecs(playerRec, lixoRec);
 
    if (lixo.position.x <= player.position.x - 600) {
         lixo.position.x = player.position.x + 800;
         lixo.position.y += 100;
-        lixo.speed = {lixo.speed.x + 0.1f, lixo.speed.y + 0.1f}; // Aumenta a velocidade do lixo a cada reset
+        lixo.speed = {lixo.speed.x + 0.125f, lixo.speed.y + 0.1f}; // Aumenta a velocidade do lixo a cada reset
         if (lixo.position.y + lixo.height >= 650) {
             lixo.position.y = 100;
         }
@@ -301,7 +301,7 @@ void UpdatePlayer() {
             if (player.life <= 0) {
                 currentState = MENU;
                 TraceLog(LOG_INFO, "GAME OVER - Voltando ao menu");
-                player.life = 3;
+                player.life = 25;
                 playerImune = false;
                 return;
             }
@@ -505,7 +505,7 @@ void DrawUI(float timer) {
 
     if (timer < 5.0f) DrawText(TextFormat("Fase %d", currentFase), 500, 30, 60, GOLD);
     DrawText("Use W/S pra mover verticalmente!", 10, 40, 20, WHITE);  
-    DrawText("ESC - Menu", 10, 650, 20, GRAY);
+    DrawText("ESC - Sair da partida", 10, 650, 20, GRAY);
 
     Rectangle playerRec = {player.position.x, player.position.y, (float)player.width, (float)player.height};
     Rectangle lixoRec = {lixo.position.x - scrollOffset, lixo.position.y, (float)lixo.width, (float)lixo.height};
@@ -569,20 +569,20 @@ void DrawCredits() {
 
 
 void ResetGame() {
-    // player.position = {400, 300};
-    // // player.speed = {2.0f, 2.0f};
+    player.position = {400, 300};
+    // player.speed = {2.0f, 2.0f};
 
-    // lixo.position = {1000, 200};
-    // // lixo.speed = {2.0f, 2.0f};
-    // lixo.width = 30;
-    // lixo.height = 30;
+    lixo.position = {1000, 200};
+    // lixo.speed = {2.0f, 2.0f};
+    lixo.width = 30;
+    lixo.height = 30;
     
-    // scrollOffset = 0.0f;
-    // currentFase = 1;
-    // faseComplete = false;
-    // animationTime = 0.0f;
-    // currentFrame = 0;
-    player.life = 3;
+    scrollOffset = 0.0f;
+    currentFase = 1;
+    faseComplete = false;
+    animationTime = 0.0f;
+    currentFrame = 0;
+    player.life = 25;
     livesTimer = 0.0f;
     wasColliding = false;  // Resetar flag de colisão ao reiniciar
 }
