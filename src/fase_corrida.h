@@ -189,8 +189,9 @@ void UpdatePlayer() {
     // Bounds (full screen width)
     player.position.y = fmaxf(0, fminf(player.position.y, 700 - player.height));
 
-    //  if (player.position.x > 30000) 
+     if (player.position.x > 10000) {
      currentState = FASE_NATACAO;
+    }
 }
 
 
