@@ -15,7 +15,16 @@ void fase_natacao(){
     float playerFrameWidth = 0.0f; 
     float animationTime = 0.0f; 
     float animationSpeed = 0.12f; // Nadar = um pouco mais lento 
-    int currentFrame = 0; 
+    int currentFrame = 0;
+
+    // Variáveis para sprite sheet do tubarão
+    Texture2D tubaraoSpriteSheet = {0};
+    bool tubaraoSpriteLoaded = false;
+    int tubaraoFrameCount = 4;  // 4 frames no sprite sheet
+    float tubaraoFrameWidth = 0.0f;
+    float tubaraoAnimationTime = 0.0f;
+    float tubaraoAnimationSpeed = 0.2f;  // Velocidade da animação do tubarão
+    int tubaraoCurrentFrame = 0; 
 
     Player player; 
     Obstacle tubarao; 
@@ -63,6 +72,39 @@ void fase_natacao(){
         }
 
     } 
+
+    // --------------------------- // CARREGAR SPRITE SHEET DO TUBARÃO // --------------------------- 
+    if (!tubaraoSpriteLoaded) {
+        const char* tubaraoPaths[] = { 
+            "hai-fin-shadow-Sheet-Sheet.png", 
+            "src/hai-fin-shadow-Sheet-Sheet.png", 
+            "assets/hai-fin-shadow-Sheet-Sheet.png", 
+            "../src/hai-fin-shadow-Sheet-Sheet.png" 
+        };
+
+        for (int i = 0; i < 4; i++) {
+            tubaraoSpriteSheet = LoadTexture(tubaraoPaths[i]);
+            if (tubaraoSpriteSheet.id > 0 && tubaraoSpriteSheet.width > 0) {
+                tubaraoFrameWidth = (float)tubaraoSpriteSheet.width / tubaraoFrameCount;
+                // Ajustar tamanho dos tubarões baseado no sprite
+                tubarao.width = (int)tubaraoFrameWidth;
+                tubarao.height = tubaraoSpriteSheet.height;
+                tubarao_2.width = (int)tubaraoFrameWidth;
+                tubarao_2.height = tubaraoSpriteSheet.height;
+                tubarao_3.width = (int)tubaraoFrameWidth;
+                tubarao_3.height = tubaraoSpriteSheet.height;
+                tubaraoSpriteLoaded = true;
+                TraceLog(LOG_INFO, "Sprite do tubarao carregado: %s", tubaraoPaths[i]);
+                break;
+            } else {
+                UnloadTexture(tubaraoSpriteSheet);
+            }
+        }
+        if (!tubaraoSpriteLoaded) {
+            TraceLog(LOG_WARNING, "Falha ao carregar sprite do tubarao, usando circulo vermelho");
+        }
+    }
+
     // --------------------------- // CARREGAR MÚSICA DE ÁGUA // --------------------------- 
     if (!musicLoaded) { 
 
@@ -73,7 +115,7 @@ void fase_natacao(){
 
         if (waterMusic.frameCount > 0) { 
 
-            SetMusicVolume(waterMusic, 0.7f); 
+            SetMusicVolume(waterMusic, 0.5f); 
             PlayMusicStream(waterMusic); 
             musicLoaded = true; 
             break;  
@@ -95,8 +137,15 @@ void fase_natacao(){
         }
 
         timer += GetFrameTime(); // // Correnteza puxando o jogador horizontalmente // 
-        // player.position.x += corrente; // Atualizar animação 
-        bool moving = IsKeyDown(KEY_W) || IsKeyDown(KEY_S) || IsKeyDown(KEY_A) || IsKeyDown(KEY_D); 
+        // player.position.x += corrente; // Atualizar animação do jogador
+        bool moving = IsKeyDown(KEY_W) || IsKeyDown(KEY_S) || IsKeyDown(KEY_A) || IsKeyDown(KEY_D);
+
+        // Atualizar animação do tubarão (sempre animando)
+        tubaraoAnimationTime += GetFrameTime();
+        if (tubaraoAnimationTime >= tubaraoAnimationSpeed) {
+            tubaraoCurrentFrame = (tubaraoCurrentFrame + 1) % tubaraoFrameCount;
+            tubaraoAnimationTime = 0.0f;
+        } 
 
         if (moving) { 
             animationTime += GetFrameTime(); 
@@ -147,10 +196,10 @@ void fase_natacao(){
 
         DrawText(TextFormat("Player Y: %.2f", player.position.y), 30, 80, 20, YELLOW); 
 
-        Rectangle rPlayer = {player.position.x, player.position.y, player.width, player.height}; 
-        Rectangle rtubarao = {tubarao.position.x, tubarao.position.y, tubarao.width, tubarao.height}; 
-        Rectangle rtubarao_2 = {tubarao_2.position.x, tubarao_2.position.y, tubarao_2.width, tubarao_2.height}; 
-        Rectangle rtubarao_3 = {tubarao_3.position.x, tubarao_3.position.y, tubarao_3.width, tubarao_3.height};
+        Rectangle rPlayer = {player.position.x, player.position.y, (float)player.width, (float)player.height}; 
+        Rectangle rtubarao = {tubarao.position.x, tubarao.position.y, (float)tubarao.width, (float)tubarao.height}; 
+        Rectangle rtubarao_2 = {tubarao_2.position.x, tubarao_2.position.y, (float)tubarao_2.width, (float)tubarao_2.height}; 
+        Rectangle rtubarao_3 = {tubarao_3.position.x, tubarao_3.position.y, (float)tubarao_3.width, (float)tubarao_3.height};
 
         bool colisao = CheckCollisionRecs(rPlayer, rtubarao); 
         colisao = colisao || CheckCollisionRecs(rPlayer, rtubarao_2); 
@@ -199,22 +248,65 @@ void fase_natacao(){
         } 
 
         
-        DrawCircle(tubarao.position.x, tubarao.position.y, 20, RED); 
-        DrawCircle(tubarao_2.position.x, tubarao_2.position.y, 20, RED); 
-        DrawCircle(tubarao_3.position.x, tubarao_3.position.y, 20, RED);
-        DrawText(TextFormat("Player Y: %.2f", player.position.y), player.position.x + 300, player.position.y, 20, YELLOW);
-
-
+        // Desenhar tubarões com sprite ou círculo vermelho como fallback
+        if (tubaraoSpriteLoaded && tubaraoSpriteSheet.id > 0) {
+            Rectangle tubaraoFrameRect = { 
+                tubaraoCurrentFrame * tubaraoFrameWidth, 
+                0.0f, 
+                tubaraoFrameWidth, 
+                (float)tubaraoSpriteSheet.height 
+            };
+            
+            // Ponto de origem para rotação (centro do sprite)
+            Vector2 origin = {tubaraoFrameWidth * 0.5f, tubaraoSpriteSheet.height * 0.5f};
+            
+            // Retângulo de destino (mesmo tamanho do frame)
+            Rectangle destRect = {
+                0.0f, 0.0f,
+                tubaraoFrameWidth,
+                (float)tubaraoSpriteSheet.height
+            };
+            
+            // Desenhar tubarão 1 (move para ESQUERDA: x diminui)
+            // Rotacionar 90 graus para apontar para esquerda
+            destRect.x = tubarao.position.x;
+            destRect.y = tubarao.position.y;
+            DrawTexturePro(tubaraoSpriteSheet, tubaraoFrameRect, destRect, 
+                          origin, 90.0f, WHITE);
+            
+            // Desenhar tubarão 2 (move para CIMA: y diminui)
+            // Sem rotação (0 graus) - sprite já aponta para cima
+            destRect.x = tubarao_2.position.x;
+            destRect.y = tubarao_2.position.y;
+            DrawTexturePro(tubaraoSpriteSheet, tubaraoFrameRect, destRect, 
+                          origin, 0.0f, WHITE);
+            
+            // Desenhar tubarão 3 (move para DIREITA: x aumenta)
+            // Rotacionar -90 graus para apontar para direita
+            destRect.x = tubarao_3.position.x;
+            destRect.y = tubarao_3.position.y;
+            DrawTexturePro(tubaraoSpriteSheet, tubaraoFrameRect, destRect, 
+                          origin, -90.0f, WHITE);
+        } else {
+            // Fallback: círculos vermelhos
+            DrawCircle(tubarao.position.x, tubarao.position.y, 20, RED); 
+            DrawCircle(tubarao_2.position.x, tubarao_2.position.y, 20, RED); 
+            DrawCircle(tubarao_3.position.x, tubarao_3.position.y, 20, RED);
+        }
+        
+        EndMode2D();  // Fechar modo 2D antes de desenhar textos na tela
+        
+        DrawText(TextFormat("Player Y: %.2f", player.position.y), 30, 80, 20, YELLOW);
 
         if (colisao) DrawText("COLISAO!", 520, 350, 40, RED); 
         DrawText("WASD para nadar | ESC para sair", 20, 680, 20, WHITE); 
-
 
         EndDrawing(); 
 
     } // Limpeza // 
 
     if (musicLoaded) UnloadMusicStream(waterMusic); 
-    if (playerSpriteLoaded) UnloadTexture(playerSpriteSheet); 
+    if (playerSpriteLoaded) UnloadTexture(playerSpriteSheet);
+    if (tubaraoSpriteLoaded && tubaraoSpriteSheet.id > 0) UnloadTexture(tubaraoSpriteSheet); 
 
 }

@@ -43,7 +43,12 @@ void HandleInput() {
     if (IsKeyPressed(KEY_ESCAPE)) {
         if (currentState == CREDITS || currentState == FASE_CORRIDA) {
             currentState = MENU;
-            if (musicLoaded) PlayMusicStream(menuMusic);
+            // Retomar música do menu quando voltar
+            if (musicLoaded && menuMusic.frameCount > 0) {
+                if (!IsMusicStreamPlaying(menuMusic)) {
+                    PlayMusicStream(menuMusic);
+                }
+            }
         } else {
             CloseWindow();
         }
