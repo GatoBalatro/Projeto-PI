@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include "menu.h"
 
+// Declaração forward para evitar múltiplas definições
+void StopGameMusic();
+
 
 GameState currentState = MENU;
 
@@ -42,6 +45,10 @@ void HandleMenuInput() {
 void HandleInput() {
     if (IsKeyPressed(KEY_ESCAPE)) {
         if (currentState == CREDITS || currentState == FASE_CORRIDA) {
+            // Parar música da fase quando voltar ao menu
+            if (currentState == FASE_CORRIDA) {
+                StopGameMusic();
+            }
             currentState = MENU;
             // Retomar música do menu quando voltar
             if (musicLoaded && menuMusic.frameCount > 0) {

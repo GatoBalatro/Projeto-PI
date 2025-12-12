@@ -17,6 +17,15 @@ float playerFrameWidth = 0.0f;
 float animationTime = 0.0f;
 const float animationSpeed = 0.15f;
 int currentFrame = 0;
+
+// Variáveis para sprite do rato (obstáculo)
+Texture2D ratoSpriteSheet = {0};
+bool ratoSpriteLoaded = false;
+int ratoFrameCount = 3;  // 3 frames no sprite sheet
+float ratoFrameWidth = 0.0f;
+float ratoAnimationTime = 0.0f;
+const float ratoAnimationSpeed = 0.2f;  // Velocidade da animação do rato
+int ratoCurrentFrame = 0;
 bool playerImune = false;
 float invencivelTimer = 0.0f;
 const float invencivelDuration = 1.0f; // 1 segundo imune
@@ -35,9 +44,16 @@ bool wasColliding = false;  // Flag para rastrear colisão anterior
 Sound victorySound = {0};
 bool victorySoundLoaded = false;
 
+// Variáveis para música da fase de corrida
+Music gameMusic = {0};
+bool gameMusicLoaded = false;
+
 void LoadPlayerSprite();
+void LoadRatoSprite();
 void LoadCollisionSound();
-void LoadVictorySound();  // Adicione esta declaração
+void LoadVictorySound();
+void LoadGameMusic();
+void StopGameMusic();
 void UpdatePlayer();
 void UpdateObstacles();
 void UpdateAnimation(float dt);
@@ -62,8 +78,10 @@ void InitGame() {
 
 
     LoadPlayerSprite();
+    LoadRatoSprite();
     LoadCollisionSound();
-    LoadVictorySound();  // Adicione esta linha
+    LoadVictorySound();
+    LoadGameMusic();
     wasColliding = false;  // Resetar flag de colisão
 }
 
@@ -91,12 +109,36 @@ void LoadPlayerSprite() {
     TraceLog(LOG_WARNING, "Failed to load player sprite, using fallback rectangle");
 }
 
+void LoadRatoSprite() {
+    if (ratoSpriteLoaded) return;
+
+    const char* paths[] = {
+        "rato-Sheet.png", "src/rato-Sheet.png", "../src/rato-Sheet.png",
+        "sprites/rato-Sheet.png", "assets/rato-Sheet.png"
+    };
+
+    for (int i = 0; i < 5; i++) {
+        Texture2D tex = LoadTexture(paths[i]);
+        if (tex.id > 0 && tex.width > 0) {
+            ratoSpriteSheet = tex;
+            ratoFrameWidth = (float)tex.width / ratoFrameCount;
+            lixo.width = (int)ratoFrameWidth;
+            lixo.height = tex.height;
+            ratoSpriteLoaded = true;
+            TraceLog(LOG_INFO, "Rato sprite loaded: %s", paths[i]);
+            return;
+        }
+        UnloadTexture(tex);
+    }
+    TraceLog(LOG_WARNING, "Failed to load rato sprite, using fallback rectangle");
+}
+
 void LoadCollisionSound() {
     if (collisionSoundLoaded) return;
 
     const char* soundPaths[] = {
-        "cartoon_bite_sound_effect.mp3", "src/cartoon_bite_sound_effect.mp3", 
-        "../src/cartoon_bite_sound_effect.mp3", "assets/cartoon_bite_sound_effect.mp3"
+        "punch.ogg", "src/punch.ogg", 
+        "../src/punch.ogg", "assets/punch.ogg"
     };
 
     for (int i = 0; i < 4; i++) {
@@ -114,25 +156,54 @@ void LoadCollisionSound() {
 void LoadVictorySound() {
     if (victorySoundLoaded) return;
 
-    const char* victoryPaths[] = {
+    const char* soundPaths[] = {
         "victoryff.swf.ogg", "src/victoryff.swf.ogg", 
         "../src/victoryff.swf.ogg", "assets/victoryff.swf.ogg"
     };
 
     for (int i = 0; i < 4; i++) {
-        victorySound = LoadSound(victoryPaths[i]);
+        victorySound = LoadSound(soundPaths[i]);
         if (victorySound.frameCount > 0) {
             SetSoundVolume(victorySound, 0.8f);  // Volume 80%
             victorySoundLoaded = true;
-            TraceLog(LOG_INFO, "SFX de vitoria carregado: %s", victoryPaths[i]);
+            TraceLog(LOG_INFO, "SFX de vitoria carregado: %s", soundPaths[i]);
             return;
         }
     }
     TraceLog(LOG_WARNING, "Falha ao carregar SFX de vitoria");
 }
 
+void LoadGameMusic() {
+    if (gameMusicLoaded) return;
 
+    const char* musicPaths[] = {
+        "Pizza-Tower-OST-Thousand-March-_WAR_.ogg",
+        "src/Pizza-Tower-OST-Thousand-March-_WAR_.ogg",
+        "../src/Pizza-Tower-OST-Thousand-March-_WAR_.ogg",
+        "assets/Pizza-Tower-OST-Thousand-March-_WAR_.ogg"
+    };
 
+    for (int i = 0; i < 4; i++) {
+        Music music = LoadMusicStream(musicPaths[i]);
+        if (music.frameCount > 0) {
+            gameMusic = music;
+            SetMusicVolume(gameMusic, 0.7f);  // Volume 70%
+            gameMusicLoaded = true;
+            TraceLog(LOG_INFO, "Musica da fase de corrida carregada: %s", musicPaths[i]);
+            return;
+        }
+    }
+    TraceLog(LOG_WARNING, "Falha ao carregar musica da fase de corrida");
+}
+
+void StopGameMusic() {
+    if (gameMusicLoaded && gameMusic.frameCount > 0) {
+        if (IsMusicStreamPlaying(gameMusic)) {
+            StopMusicStream(gameMusic);
+            TraceLog(LOG_INFO, "Musica da fase de corrida parada");
+        }
+    }
+}
 
 void UpdateGame(float dt) {
     // --- 1. Global Updates (Run regardless of state) ---
@@ -147,6 +218,22 @@ void UpdateGame(float dt) {
 
 
     if (currentState != FASE_CORRIDA) return;
+
+    // Atualizar música da fase
+    if (gameMusicLoaded && gameMusic.frameCount > 0) {
+        if (!IsMusicStreamPlaying(gameMusic)) {
+            PlayMusicStream(gameMusic);
+            TraceLog(LOG_INFO, "Musica da fase iniciada");
+        }
+        UpdateMusicStream(gameMusic);  // Atualiza o stream de música
+    }
+
+    // Atualizar animação do rato
+    ratoAnimationTime += dt;
+    if (ratoAnimationTime >= ratoAnimationSpeed) {
+        ratoCurrentFrame = (ratoCurrentFrame + 1) % ratoFrameCount;
+        ratoAnimationTime = 0.0f;
+    }
 
     UpdateScroll(dt);
 
@@ -219,7 +306,6 @@ void UpdatePlayer() {
         // Tocar som de vitória ao completar a fase
         if (victorySoundLoaded && victorySound.frameCount > 0) {
             PlaySound(victorySound);
-            TraceLog(LOG_INFO, "Som de vitoria tocado!");
         }
         currentState = FASE_NATACAO;
         TraceLog(LOG_INFO, "Fase %d completa!", currentFase);
@@ -255,11 +341,11 @@ void UpdateCamera(Vector2& cameraOffset, float& position_x_mais_longe) {
 
 // ======================== RENDERING ========================
 void DrawGame(Vector2& cameraOffset, float timer){  
-
-    BeginDrawing();
-    ClearBackground(DARKGREEN);
+    // Não chamar BeginDrawing/EndDrawing aqui - já são chamados no loop principal
+    // ClearBackground também é chamado no loop principal antes desta função
 
    if (currentState == FASE_CORRIDA) {
+        ClearBackground(DARKGREEN);
         // Apply camera (player stays near center)
         BeginMode2D((Camera2D){ 
             .offset = {600, 350}, 
@@ -270,17 +356,34 @@ void DrawGame(Vector2& cameraOffset, float timer){
 
         DrawWorld(cameraOffset);  // Camera follows player
         DrawPlayer();
-        DrawRectangleRec({
-            lixo.position.x, lixo.position.y, 
-            (float)lixo.width, (float)lixo.height
-        }, RED);
+        
+        // Desenhar rato com sprite ou retângulo vermelho como fallback
+        if (ratoSpriteLoaded && ratoSpriteSheet.id > 0) {
+            Rectangle ratoFrameRect = {
+                ratoCurrentFrame * ratoFrameWidth, 0,
+                ratoFrameWidth, (float)ratoSpriteSheet.height
+            };
+            // Espelhar horizontalmente: usar largura negativa no retângulo de destino
+            Rectangle destRect = {
+                lixo.position.x + ratoFrameWidth,  // Ajustar posição X para compensar o espelhamento
+                lixo.position.y,
+                -ratoFrameWidth,  // Largura negativa espelha horizontalmente
+                (float)ratoSpriteSheet.height
+            };
+            DrawTexturePro(ratoSpriteSheet, ratoFrameRect, destRect,
+                          (Vector2){0, 0}, 0.0f, WHITE);
+        } else {
+            // Fallback: retângulo vermelho
+            DrawRectangleRec({
+                lixo.position.x, lixo.position.y, 
+                (float)lixo.width, (float)lixo.height
+            }, RED);
+        }
 
         EndMode2D();
 
         DrawUI(timer);  // UI always on top (no camera)
     }
-
-    EndDrawing();
 }
 
 void DrawWorld(const Vector2& cameraOffset) {
@@ -342,8 +445,13 @@ void DrawUI(float timer) {
 
 void CleanupGame() {
     if (playerSpriteLoaded) UnloadTexture(playerSpriteSheet);
+    if (ratoSpriteLoaded) UnloadTexture(ratoSpriteSheet);
     if (collisionSoundLoaded && collisionSound.frameCount > 0) UnloadSound(collisionSound);
     if (victorySoundLoaded && victorySound.frameCount > 0) UnloadSound(victorySound);
+    if (gameMusicLoaded && gameMusic.frameCount > 0) {
+        StopMusicStream(gameMusic);
+        UnloadMusicStream(gameMusic);
+    }
 }
 
 // ======================== FUNÇÕES DO MENU (NÃO REMOVA!) ========================
