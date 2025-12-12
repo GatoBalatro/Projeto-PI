@@ -31,8 +31,13 @@ Sound collisionSound = {0};
 bool collisionSoundLoaded = false;
 bool wasColliding = false;  // Flag para rastrear colisão anterior
 
+// Variáveis para SFX de vitória
+Sound victorySound = {0};
+bool victorySoundLoaded = false;
+
 void LoadPlayerSprite();
 void LoadCollisionSound();
+void LoadVictorySound();  // Adicione esta declaração
 void UpdatePlayer();
 void UpdateObstacles();
 void UpdateAnimation(float dt);
@@ -57,7 +62,8 @@ void InitGame() {
 
 
     LoadPlayerSprite();
-    LoadCollisionSound();  // Adicione esta linha
+    LoadCollisionSound();
+    LoadVictorySound();  // Adicione esta linha
     wasColliding = false;  // Resetar flag de colisão
 }
 
@@ -103,6 +109,26 @@ void LoadCollisionSound() {
         }
     }
     TraceLog(LOG_WARNING, "Falha ao carregar SFX de colisao");
+}
+
+void LoadVictorySound() {
+    if (victorySoundLoaded) return;
+
+    const char* victoryPaths[] = {
+        "victoryff.swf.ogg", "src/victoryff.swf.ogg", 
+        "../src/victoryff.swf.ogg", "assets/victoryff.swf.ogg"
+    };
+
+    for (int i = 0; i < 4; i++) {
+        victorySound = LoadSound(victoryPaths[i]);
+        if (victorySound.frameCount > 0) {
+            SetSoundVolume(victorySound, 0.8f);  // Volume 80%
+            victorySoundLoaded = true;
+            TraceLog(LOG_INFO, "SFX de vitoria carregado: %s", victoryPaths[i]);
+            return;
+        }
+    }
+    TraceLog(LOG_WARNING, "Falha ao carregar SFX de vitoria");
 }
 
 
@@ -189,8 +215,15 @@ void UpdatePlayer() {
     // Bounds (full screen width)
     player.position.y = fmaxf(0, fminf(player.position.y, 700 - player.height));
 
-    //  if (player.position.x > 30000) 
-     currentState = FASE_NATACAO;
+      if (player.position.x > 30000) {
+        // Tocar som de vitória ao completar a fase
+        if (victorySoundLoaded && victorySound.frameCount > 0) {
+            PlaySound(victorySound);
+            TraceLog(LOG_INFO, "Som de vitoria tocado!");
+        }
+        currentState = FASE_NATACAO;
+        TraceLog(LOG_INFO, "Fase %d completa!", currentFase);
+    }
 }
 
 
@@ -310,6 +343,7 @@ void DrawUI(float timer) {
 void CleanupGame() {
     if (playerSpriteLoaded) UnloadTexture(playerSpriteSheet);
     if (collisionSoundLoaded && collisionSound.frameCount > 0) UnloadSound(collisionSound);
+    if (victorySoundLoaded && victorySound.frameCount > 0) UnloadSound(victorySound);
 }
 
 // ======================== FUNÇÕES DO MENU (NÃO REMOVA!) ========================
