@@ -14,6 +14,8 @@ Texture2D playerSpriteSheet = {0};
 RenderTexture2D linhasTexture;
 bool playerSpriteLoaded = false;
 
+float livesTimer = 0.0f;
+
 int playerFrameCount = 8;
 float playerFrameWidth = 0.0f;
 float animationTime = 0.0f;
@@ -80,7 +82,7 @@ void InitGame() {
     lixo = { {1000, 200}, {1.20f, 1.20f}, 30, 30 };
     player.life = 3;
 
-
+    livesTimer = 0.0f;
     LoadPlayerSprite();
     LoadRatoSprite();
     LoadCollisionSound();
@@ -214,7 +216,7 @@ void StopGameMusic() {
 
 void UpdateGame(float dt) {
     // --- 1. Global Updates (Run regardless of state) ---
-
+    
     // Atualizar invencibilidade
     if (playerImune) {
         invencivelTimer -= dt;
@@ -223,6 +225,9 @@ void UpdateGame(float dt) {
         }
     }
 
+    if (livesTimer > 0.0f) {
+        livesTimer -= dt;
+    }
 
     if (currentState != FASE_CORRIDA) return;
 
@@ -265,6 +270,7 @@ void UpdatePlayer() {
     // Collision check (SCREEN coords - NO scrollOffset!)
     Rectangle playerRec = { player.position.x, player.position.y, (float)player.width, (float)player.height };
     Rectangle lixoRec = { lixo.position.x, lixo.position.y, (float)lixo.width, (float)lixo.height };
+    bool colliding = CheckCollisionRecs(playerRec, lixoRec);
 
    if (lixo.position.x <= player.position.x - 600) {
         lixo.position.x = player.position.x + 800;
@@ -275,7 +281,6 @@ void UpdatePlayer() {
         }
     }
     
-    bool colliding = CheckCollisionRecs(playerRec, lixoRec);
 
     // Tocar SFX de colisão quando detectar nova colisão
     if (colliding && !wasColliding && collisionSoundLoaded) {
@@ -291,8 +296,20 @@ void UpdatePlayer() {
    
     if (colliding) {
 
+
+
+            if (player.life <= 0) {
+                currentState = MENU;
+                TraceLog(LOG_INFO, "GAME OVER - Voltando ao menu");
+                player.life = 3;
+                playerImune = false;
+                return;
+            }
+
+        
         // Se ainda não está imune, perde vida
         if (!playerImune) {
+            livesTimer = 0.2f;  // Piscar vidas por 0.2s
             player.life -= 1;
             playerImune = true;
             invencivelTimer = invencivelDuration;
@@ -485,12 +502,19 @@ void DrawUI(float timer) {
 
     DrawText(TextFormat("Player X: %.2f", player.position.x), 10, 80, 20, YELLOW);
 
+
     if (timer < 5.0f) DrawText(TextFormat("Fase %d", currentFase), 500, 30, 60, GOLD);
     DrawText("Use W/S pra mover verticalmente!", 10, 40, 20, WHITE);  
     DrawText("ESC - Menu", 10, 650, 20, GRAY);
 
     Rectangle playerRec = {player.position.x, player.position.y, (float)player.width, (float)player.height};
     Rectangle lixoRec = {lixo.position.x - scrollOffset, lixo.position.y, (float)lixo.width, (float)lixo.height};
+
+    bool showLives = !playerImune || fmodf(livesTimer / 0.1f, 2.0f) < 1.0f;
+    if (showLives) {
+        DrawText(TextFormat("VIDAS: %d", player.life), 10, 110, 30, playerImune ? RED : YELLOW);
+    }
+
 
     // if (CheckCollisionRecs(playerRec, lixoRec)) {
     //     DrawText("Colidiu com o lixo! Fase reiniciada.", 350, 350, 30, RED);
@@ -558,6 +582,8 @@ void ResetGame() {
     // faseComplete = false;
     // animationTime = 0.0f;
     // currentFrame = 0;
+    player.life = 3;
+    livesTimer = 0.0f;
     wasColliding = false;  // Resetar flag de colisão ao reiniciar
 }
 
