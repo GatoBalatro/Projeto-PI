@@ -110,10 +110,10 @@ void LoadMenuMusic() {
 
     const char* paths[] = {
         "Dave-the-Diver-OST-On-the-boat.ogg",
-        "src/Dave-the-Diver-OST-On-the-boat.ogg",
-        "../src/Dave-the-Diver-OST-On-the-boat.ogg",
-        "Dave the Diver OST - On the boat.ogg",
-        "Dave the Diver OST - On the boat.mp3"
+        "audio/Dave-the-Diver-OST-On-the-boat.ogg",
+        "../audio/Dave-the-Diver-OST-On-the-boat.ogg",
+        "Dave-the-Diver-OST-On-the-boat.ogg",
+        "Dave-the-Diver-OST-On-the-boat.mp3"
     };
 
     for (int i = 0; i < 5; i++) {

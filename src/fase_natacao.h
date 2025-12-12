@@ -55,7 +55,11 @@ void fase_natacao(){
 
     if (!playerSpriteLoaded) { 
 
-        const char* paths[] = { "swimmer.png", "src/swimmer.png", "assets/swimmer.png", "../src/swimmer.png" }; 
+        const char* paths[] = { 
+        "../img/swimmer.png",  // Prioridade: busca na pasta irmã img
+        "img/swimmer.png",     // Fallback: busca se executável estiver na raiz
+        "swimmer.png"          // Fallback final
+         }; 
 
         for (int i = 0; i < 4; i++) { 
 
@@ -81,10 +85,9 @@ void fase_natacao(){
     // --------------------------- // CARREGAR SPRITE SHEET DO TUBARÃO // --------------------------- 
     if (!tubaraoSpriteLoaded) {
         const char* tubaraoPaths[] = { 
-            "hai-fin-shadow-Sheet-Sheet.png", 
-            "src/hai-fin-shadow-Sheet-Sheet.png", 
-            "assets/hai-fin-shadow-Sheet-Sheet.png", 
-            "../src/hai-fin-shadow-Sheet-Sheet.png" 
+            "../img/hai-fin-shadow-Sheet-Sheet.png", 
+            "img/hai-fin-shadow-Sheet-Sheet.png", 
+            "hai-fin-shadow-Sheet-Sheet.png"
         };
 
         for (int i = 0; i < 4; i++) {
@@ -113,7 +116,11 @@ void fase_natacao(){
     // --------------------------- // CARREGAR MÚSICA DE ÁGUA // --------------------------- 
     if (!musicLoaded) { 
 
-        const char* musicPaths[] = { "water.ogg", "src/water.ogg", "../src/water.ogg", "assets/water.ogg" }; 
+        const char* musicPaths[] = {
+            "../audio/water.ogg", 
+            "audio/water.ogg", 
+            "water.ogg"
+         }; 
         for (int i = 0; i < 4; i++) { 
 
         waterMusic = LoadMusicStream(musicPaths[i]); 
@@ -131,10 +138,9 @@ void fase_natacao(){
     // --------------------------- // CARREGAR SFX DE COLISÃO // --------------------------- 
     if (!collisionSoundLoaded) {
         const char* soundPaths[] = { 
-            "cartoon_bite_sound_effect.mp3", 
-            "src/cartoon_bite_sound_effect.mp3", 
-            "../src/cartoon_bite_sound_effect.mp3", 
-            "assets/cartoon_bite_sound_effect.mp3" 
+                "../audio/cartoon_bite_sound_effect.mp3", 
+                "audio/cartoon_bite_sound_effect.mp3", 
+                "cartoon_bite_sound_effect.mp3"
         };
         
         for (int i = 0; i < 4; i++) {

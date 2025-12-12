@@ -80,7 +80,7 @@ if(WIN32)
     # Copiar música OGG
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/src/Dave-the-Diver-OST-On-the-boat.ogg"
+        "${CMAKE_SOURCE_DIR}/img/Dave-the-Diver-OST-On-the-boat.ogg"
         $<TARGET_FILE_DIR:${PROJECT_NAME}>
     )
     
@@ -89,28 +89,28 @@ if(WIN32)
         COMMAND ${CMAKE_COMMAND} -E make_directory
         "${CMAKE_BINARY_DIR}/src"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/src/Dave-the-Diver-OST-On-the-boat.ogg"
-        "${CMAKE_BINARY_DIR}/src/Dave-the-Diver-OST-On-the-boat.ogg"
+        "${CMAKE_SOURCE_DIR}/audio/Dave-the-Diver-OST-On-the-boat.ogg"
+        "${CMAKE_BINARY_DIR}/audio/Dave-the-Diver-OST-On-the-boat.ogg"
     )
     
     # Copiar música da fase de corrida
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/src/Pizza-Tower-OST-Thousand-March-_WAR_.ogg"
+        "${CMAKE_SOURCE_DIR}/audio/Pizza-Tower-OST-Thousand-March-_WAR_.ogg"
         $<TARGET_FILE_DIR:${PROJECT_NAME}>
     )
     
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/src/Pizza-Tower-OST-Thousand-March-_WAR_.ogg"
-        "${CMAKE_BINARY_DIR}/src/Pizza-Tower-OST-Thousand-March-_WAR_.ogg"
+        "${CMAKE_SOURCE_DIR}/audio/Pizza-Tower-OST-Thousand-March-_WAR_.ogg"
+        "${CMAKE_BINARY_DIR}/audio/Pizza-Tower-OST-Thousand-March-_WAR_.ogg"
     )
 endif()
 
 # Copiar sprite do jogador
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_SOURCE_DIR}/src/player.png"
+    "${CMAKE_SOURCE_DIR}/img/player.png"
     $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )
 
@@ -119,83 +119,83 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory
     "${CMAKE_BINARY_DIR}/src"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_SOURCE_DIR}/src/player.png"
-    "${CMAKE_BINARY_DIR}/src/player.png"
+    "${CMAKE_SOURCE_DIR}/img/player.png"
+    "${CMAKE_BINARY_DIR}/img/player.png"
 )
 
 # Copiar sprite do rato (obstáculo da fase de corrida)
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_SOURCE_DIR}/src/rato-Sheet.png"
+    "${CMAKE_SOURCE_DIR}/img/rato-Sheet.png"
     $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_SOURCE_DIR}/src/rato-Sheet.png"
-    "${CMAKE_BINARY_DIR}/src/rato-Sheet.png"
+    "${CMAKE_SOURCE_DIR}/img/rato-Sheet.png"
+    "${CMAKE_BINARY_DIR}/img/rato-Sheet.png"
 )
 
 # Copiar sprites da fase de natação
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_SOURCE_DIR}/src/swimmer.png"
+    "${CMAKE_SOURCE_DIR}/img/swimmer.png"
     $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_SOURCE_DIR}/src/swimmer.png"
-    "${CMAKE_BINARY_DIR}/src/swimmer.png"
+    "${CMAKE_SOURCE_DIR}/img/swimmer.png"
+    "${CMAKE_BINARY_DIR}/img/swimmer.png"
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_SOURCE_DIR}/src/hai-fin-shadow-Sheet-Sheet.png"
+    "${CMAKE_SOURCE_DIR}/img/hai-fin-shadow-Sheet-Sheet.png"
     $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_SOURCE_DIR}/src/hai-fin-shadow-Sheet-Sheet.png"
-    "${CMAKE_BINARY_DIR}/src/hai-fin-shadow-Sheet-Sheet.png"
+    "${CMAKE_SOURCE_DIR}/img/hai-fin-shadow-Sheet-Sheet.png"
+    "${CMAKE_BINARY_DIR}/img/hai-fin-shadow-Sheet-Sheet.png"
 )
 
 # Copiar música da fase de natação
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_SOURCE_DIR}/src/water.ogg"
+    "${CMAKE_SOURCE_DIR}/audio/water.ogg"
     $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_SOURCE_DIR}/src/water.ogg"
-    "${CMAKE_BINARY_DIR}/src/water.ogg"
+    "${CMAKE_SOURCE_DIR}/audio/water.ogg"
+    "${CMAKE_BINARY_DIR}/audio/water.ogg"
 )
 
 # Copiar SFX de colisão (punch.ogg)
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_SOURCE_DIR}/src/punch.ogg"
+    "${CMAKE_SOURCE_DIR}/audio/punch.ogg"
     $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_SOURCE_DIR}/src/punch.ogg"
-    "${CMAKE_BINARY_DIR}/src/punch.ogg"
+    "${CMAKE_SOURCE_DIR}/audio/punch.ogg"
+    "${CMAKE_BINARY_DIR}/audio/punch.ogg"
 )
 
 # Copiar SFX de vitória
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_SOURCE_DIR}/src/victoryff.swf.ogg"
+    "${CMAKE_SOURCE_DIR}/audio/victoryff.swf.ogg"
     $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_SOURCE_DIR}/src/victoryff.swf.ogg"
-    "${CMAKE_BINARY_DIR}/src/victoryff.swf.ogg"
+    "${CMAKE_SOURCE_DIR}/audio/victoryff.swf.ogg"
+    "${CMAKE_BINARY_DIR}/audio/victoryff.swf.ogg"
 )

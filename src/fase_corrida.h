@@ -90,8 +90,9 @@ void LoadPlayerSprite() {
     if (playerSpriteLoaded) return;
 
     const char* paths[] = {
-        "player.png", "src/player.png", "../src/player.png",
-        "sprites/player.png", "assets/player.png"
+        "../img/player.png",
+        "img/player.png",
+        "player.png"
     };
 
     for (int i = 0; i < 5; i++) {
@@ -114,8 +115,9 @@ void LoadRatoSprite() {
     if (ratoSpriteLoaded) return;
 
     const char* paths[] = {
-        "rato-Sheet.png", "src/rato-Sheet.png", "../src/rato-Sheet.png",
-        "sprites/rato-Sheet.png", "assets/rato-Sheet.png"
+        "../img/rato-Sheet.png",
+        "img/rato-Sheet.png",
+        "rato-Sheet.png"
     };
 
     for (int i = 0; i < 5; i++) {
@@ -138,8 +140,9 @@ void LoadCollisionSound() {
     if (collisionSoundLoaded) return;
 
     const char* soundPaths[] = {
-        "punch.ogg", "src/punch.ogg", 
-        "../src/punch.ogg", "assets/punch.ogg"
+        "../audio/punch.ogg",
+        "audio/punch.ogg",
+        "punch.ogg"
     };
 
     for (int i = 0; i < 4; i++) {
@@ -158,8 +161,9 @@ void LoadVictorySound() {
     if (victorySoundLoaded) return;
 
     const char* soundPaths[] = {
-        "victoryff.swf.ogg", "src/victoryff.swf.ogg", 
-        "../src/victoryff.swf.ogg", "assets/victoryff.swf.ogg"
+        "../audio/victoryff.swf.ogg",
+        "audio/victoryff.swf.ogg",
+        "victoryff.swf.ogg"
     };
 
     for (int i = 0; i < 4; i++) {
@@ -178,10 +182,9 @@ void LoadGameMusic() {
     if (gameMusicLoaded) return;
 
     const char* musicPaths[] = {
-        "Pizza-Tower-OST-Thousand-March-_WAR_.ogg",
-        "src/Pizza-Tower-OST-Thousand-March-_WAR_.ogg",
-        "../src/Pizza-Tower-OST-Thousand-March-_WAR_.ogg",
-        "assets/Pizza-Tower-OST-Thousand-March-_WAR_.ogg"
+        "../audio/Pizza-Tower-OST-Thousand-March-_WAR_.ogg",
+        "audio/Pizza-Tower-OST-Thousand-March-_WAR_.ogg",
+        "Pizza-Tower-OST-Thousand-March-_WAR_.ogg"
     };
 
     for (int i = 0; i < 4; i++) {
