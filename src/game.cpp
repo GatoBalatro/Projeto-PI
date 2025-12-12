@@ -49,6 +49,14 @@ void RunGame() {
                 UpdateGame(dt);   // <-- atualiza player, obstáculos, animação, música, etc.
                 DrawGame(cameraOffset, timer); 
                 position_x_mais_longe = fmaxf(position_x_mais_longe, player.position.x);
+                
+                // Verificar transição de fase após renderização (evita frame perdido)
+                // shouldTransitionToNatacao é definida em fase_corrida.h (já incluído)
+                if (shouldTransitionToNatacao) {
+                    shouldTransitionToNatacao = false;
+                    currentState = FASE_NATACAO;
+                    TraceLog(LOG_INFO, "Transição para FASE_NATACAO realizada");
+                }
                 break;
 
             case FASE_NATACAO:

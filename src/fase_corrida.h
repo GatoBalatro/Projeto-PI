@@ -34,6 +34,7 @@ const float invencivelDuration = 1.0f; // 1 segundo imune
 float scrollOffset = 0.0f;
 int currentFase = 1;
 bool faseComplete = false;
+bool shouldTransitionToNatacao = false;  // Flag para transição de fase após renderização
 
 // Variáveis para SFX de colisão
 Sound collisionSound = {0};
@@ -307,8 +308,9 @@ void UpdatePlayer() {
         if (victorySoundLoaded && victorySound.frameCount > 0) {
             PlaySound(victorySound);
         }
-        currentState = FASE_NATACAO;
-        TraceLog(LOG_INFO, "Fase %d completa!", currentFase);
+        // Marcar para transição após renderização (evita frame perdido)
+        shouldTransitionToNatacao = true;
+        TraceLog(LOG_INFO, "Fase %d completa! Transição marcada.", currentFase);
     }
 }
 
