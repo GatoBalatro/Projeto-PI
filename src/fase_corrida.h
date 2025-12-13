@@ -289,8 +289,15 @@ void UpdatePlayer() {
     wasColliding = colliding;  // Atualizar flag para próxima frame
 
     // ORIGINAL LOGIC: Horizontal A/D + lixo move ONLY if !colliding → "STOPS" on hit
-    if (IsKeyDown(KEY_A)) player.position.x -= player.speed.x;
-    if (IsKeyDown(KEY_D)) player.position.x += player.speed.x;
+    if (IsKeyDown(KEY_A)) {
+        if(player.position.x >0){ 
+        player.position.x -= player.speed.x;
+    }
+    };
+
+    if (IsKeyDown(KEY_D)) {
+        player.position.x += player.speed.x;
+    };
     lixo.position.x -= lixo.speed.x;
 
    
@@ -366,7 +373,7 @@ void UpdateCamera(Vector2& cameraOffset, float& position_x_mais_longe) {
 
 // ======================== RENDERING ========================
 
-void DrawMovingYellowStripes(Vector2 cameraOffset, int screenWidth, int screenHeight) {
+void DrawMovingYellowStripes(Vector2 cameraOffset, int screenWidth, int screenHeight, int finishline) {
     const int roadY = 100;
     const int roadHeight = 500;
     
@@ -388,7 +395,7 @@ void DrawMovingYellowStripes(Vector2 cameraOffset, int screenWidth, int screenHe
         float screenX = worldX - offset;
 
         // Only draw stripes on the road
-        if (screenX > -stripeWidth ) {
+        if (screenX > -stripeWidth &&  screenX < finishline) {
             int y = roadY + roadHeight/2 - stripeHeight/2;
 
             DrawRectangle((int)screenX, y, stripeWidth, stripeHeight, YELLOW);
@@ -415,9 +422,6 @@ void DrawGame(Vector2& cameraOffset, float timer){
         DrawWorld(cameraOffset);  // Camera follows player
         DrawPlayer();
 
-        // Get dynamic screen dimensions
-        int screenWidth = GetScreenWidth();
-        int screenHeight = GetScreenHeight();
         
         BeginMode2D((Camera2D){ 
             .offset = {600, 350}, 
@@ -428,7 +432,7 @@ void DrawGame(Vector2& cameraOffset, float timer){
 
         
         DrawWorld(cameraOffset);
-        DrawMovingYellowStripes( cameraOffset, screenWidth, screenHeight);
+        
         DrawPlayer();
         // Desenhar rato com sprite ou retângulo vermelho como fallback
         if (ratoSpriteLoaded && ratoSpriteSheet.id > 0) {
@@ -463,10 +467,16 @@ void DrawWorld(const Vector2& cameraOffset) {
 
     // Tamanho da pista: 30000px de comprimento
     int max_pos = MAX_X_POSITION;
-    DrawRectangle(-200, 100, max_pos, 500, DARKGRAY);
-    DrawRectangleLinesEx({-200, 100, (float)max_pos, 500}, 10, WHITE);
+    // Get dynamic screen dimensions
+    int screenWidth = GetScreenWidth();
+    int screenHeight = GetScreenHeight();
+    float finishX = (float)max_pos;   // posição real no mundo
+        
 
-    float finishX = 29800.0f;   // posição real no mundo
+    DrawRectangle(-200, 100, max_pos + (screenWidth), 500, DARKGRAY);
+    DrawRectangleLinesEx({-200, 100, (float)(max_pos + screenWidth), 500}, 10, WHITE);
+
+    DrawMovingYellowStripes( cameraOffset, screenWidth, screenHeight, finishX);
 
     // Faixa vertical branca (largura 40px)
     DrawRectangle(finishX, 100, 40, 500, WHITE);
@@ -480,7 +490,7 @@ void DrawWorld(const Vector2& cameraOffset) {
     DrawText("CHEGADA", finishX - 40, 70, 40, GOLD);
  
 
-        DrawText("Pista vista de cima", 10, 10, 30, WHITE);
+        // DrawText("Pista vista de cima", 10, 10, 30, WHITE);
         DrawText(TextFormat("Fase: %d", currentFase), 1000, 10, 30, GOLD);
 }
 
@@ -500,7 +510,7 @@ void DrawPlayer() {
 
 void DrawUI(float timer) {
 
-    DrawText(TextFormat("Player X: %.2f", player.position.x), 10, 80, 20, YELLOW);
+    // DrawText(TextFormat("Player X: %.2f", player.position.x), 10, 80, 20, YELLOW);
 
 
     if (timer < 5.0f) DrawText(TextFormat("Fase %d", currentFase), 500, 30, 60, GOLD);

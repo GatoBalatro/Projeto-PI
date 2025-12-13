@@ -205,8 +205,9 @@ void fase_natacao(){
         } 
         
         // Movimento com WASD 
+        if (IsKeyDown(KEY_S) && player.position.y > 0) player.position.y += player.speed.y;
+         
         if (IsKeyDown(KEY_W)) player.position.y -= player.speed.y; 
-        if (IsKeyDown(KEY_S)) player.position.y += player.speed.y; 
         if (IsKeyDown(KEY_A)) player.position.x -= player.speed.x; 
         if (IsKeyDown(KEY_D)) player.position.x += player.speed.x; 
 
@@ -370,7 +371,7 @@ void fase_natacao(){
         
         EndMode2D();  // Fechar modo 2D antes de desenhar textos na tela
         
-        // DrawText(TextFormat("Player Y: %.2f", player.position.y), 30, 80, 20, YELLOW);
+        DrawText(TextFormat("Player Y: %.2f", player.position.y), 30, 80, 20, YELLOW);
         DrawText(TextFormat("VIDAS: %d", player.life), 10, 110, 30, playerImune ? RED : YELLOW);
         if (colisao) DrawText("COLISAO!", 520, 350, 40, RED); 
 
