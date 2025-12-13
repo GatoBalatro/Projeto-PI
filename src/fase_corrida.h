@@ -6,6 +6,7 @@
 #include "fase_natacao.h"
 #include "menu.h"
 
+
 #define MAX_X_POSITION 7000;
 
 Player player;
@@ -509,12 +510,12 @@ void DrawPlayer() {
 }
 
 void DrawUI(float timer) {
-
-    // DrawText(TextFormat("Player X: %.2f", player.position.x), 10, 80, 20, YELLOW);
+    int max_pos = MAX_X_POSITION;
+    // DrawText(TextFormat("distancia do final %.2f", ( max_pos / player.position.x) - 1), 10, 80, 20, YELLOW);
 
 
     if (timer < 5.0f) DrawText(TextFormat("Fase %d", currentFase), 500, 30, 60, GOLD);
-    DrawText("Use W/S pra mover verticalmente!", 10, 40, 20, WHITE);  
+    DrawText("Use W/A/S/D pra mover verticalmente!", 10, 40, 20, WHITE);  
     DrawText("ESC - Sair da partida", 10, 650, 20, GRAY);
 
     Rectangle playerRec = {player.position.x, player.position.y, (float)player.width, (float)player.height};
