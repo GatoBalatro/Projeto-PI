@@ -240,8 +240,6 @@ void fase_natacao(){
         if (player.position.x > limite_tela_x) player.position.x = limite_tela_x; 
         if (player.position.y > 650 - player.height) player.position.y = 650 - player.height; 
 
-        DrawText(TextFormat("Player Y: %.2f", player.position.y), 30, 80, 20, YELLOW); 
-
         Rectangle rPlayer = {player.position.x, player.position.y, (float)player.width/1.5, (float)player.height/1.5}; 
         Rectangle rtubarao = {tubarao.position.x - 40, tubarao.position.y - 30,  (float)tubarao_2.height/3, (float)tubarao_2.width/8}; 
         Rectangle rtubarao_2 = {tubarao_2.position.x- 30, tubarao_2.position.y- 40, (float)tubarao.width/6, (float)tubarao.height/3}; 
@@ -371,7 +369,7 @@ void fase_natacao(){
         
         EndMode2D();  // Fechar modo 2D antes de desenhar textos na tela
         
-        DrawText(TextFormat("Player Y: %.2f", player.position.y), 30, 80, 20, YELLOW);
+        // DrawText(TextFormat("Player Y: %.2f", player.position.y), 30, 80, 20, YELLOW);
         DrawText(TextFormat("VIDAS: %d", player.life), 10, 110, 30, playerImune ? RED : YELLOW);
         if (colisao) DrawText("COLISAO!", 520, 350, 40, RED); 
 

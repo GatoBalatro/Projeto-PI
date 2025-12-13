@@ -8,8 +8,7 @@
 
 
 
-// Main game loop (now clean and readable!)
-
+// Main game loop
 void RunGame() {
     InitGame();
     LoadMenuMusic();  // Carregar música do menu
@@ -65,6 +64,7 @@ void RunGame() {
                     StopMusicStream(menuMusic);
                 }
                 fase_natacao();   // fase ainda WIP (tem seu próprio loop)
+                ResetGame();
                 break;
 
             case FASE_CICLISMO: // terceira fase acabou ficando de fora do projeto por termos ficado com apenas 3 membros no grupo 

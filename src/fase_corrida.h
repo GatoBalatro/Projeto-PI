@@ -275,7 +275,7 @@ void UpdatePlayer() {
    if (lixo.position.x <= player.position.x - 600) {
         lixo.position.x = player.position.x + 800;
         lixo.position.y += 100;
-        lixo.speed = {lixo.speed.x + 0.125f, lixo.speed.y + 0.1f}; // Aumenta a velocidade do lixo a cada reset
+        lixo.speed = {lixo.speed.x + 0.11f, lixo.speed.y + 0.11f}; // Aumenta a velocidade do lixo a cada reset
         if (lixo.position.y + lixo.height >= 650) {
             lixo.position.y = 100;
         }
