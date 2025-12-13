@@ -20,7 +20,7 @@ float livesTimer = 0.0f;
 int playerFrameCount = 8;
 float playerFrameWidth = 0.0f;
 float animationTime = 0.0f;
-const float animationSpeed = 0.15f;
+const float animationSpeed = 0.1f;
 int currentFrame = 0;
 
 // Variáveis para sprite do rato (obstáculo)
@@ -81,7 +81,7 @@ void InitGame() {
     ResetGame();
     player = { {400, 300}, {2.0f, 2.0f}, 50, 70 };
     lixo = { {1000, 200}, {1.30f, 1.30f}, 30, 30 };
-    player.life = 25;
+    player.life = 10;
 
     livesTimer = 0.0f;
     LoadPlayerSprite();
@@ -289,7 +289,6 @@ void UpdatePlayer() {
     }
     wasColliding = colliding;  // Atualizar flag para próxima frame
 
-    // ORIGINAL LOGIC: Horizontal A/D + lixo move ONLY if !colliding → "STOPS" on hit
     if (IsKeyDown(KEY_A)) {
         if(player.position.x >0){ 
         player.position.x -= player.speed.x;
@@ -309,7 +308,7 @@ void UpdatePlayer() {
             if (player.life <= 0) {
                 currentState = MENU;
                 TraceLog(LOG_INFO, "GAME OVER - Voltando ao menu");
-                player.life = 25;
+                player.life = 10;
                 playerImune = false;
                 return;
             }
@@ -331,7 +330,7 @@ void UpdatePlayer() {
     }
 
 
-    // Bounds (full screen width)
+    // Bounds 
     player.position.y = fmaxf(0, fminf(player.position.y, 700 - player.height));
       int max_pos = MAX_X_POSITION;
       if (player.position.x > max_pos){
@@ -407,8 +406,6 @@ void DrawMovingYellowStripes(Vector2 cameraOffset, int screenWidth, int screenHe
 }
 
 void DrawGame(Vector2& cameraOffset, float timer){  
-    // Não chamar BeginDrawing/EndDrawing aqui - já são chamados no loop principal
-    // ClearBackground também é chamado no loop principal antes desta função
 
    if (currentState == FASE_CORRIDA) {
         ClearBackground(DARKGREEN);
@@ -441,9 +438,9 @@ void DrawGame(Vector2& cameraOffset, float timer){
                 ratoCurrentFrame * ratoFrameWidth, 0,
                 ratoFrameWidth, (float)ratoSpriteSheet.height
             };
-            // Espelhar horizontalmente: usar largura negativa no retângulo de destino
+            // Espelhar horizontalmente
             Rectangle destRect = {
-                lixo.position.x + ratoFrameWidth,  // Ajustar posição X para compensar o espelhamento
+                lixo.position.x + ratoFrameWidth,  //  X Ajustado para compensar o espelhamento
                 lixo.position.y,
                 -ratoFrameWidth,  // Largura negativa espelha horizontalmente
                 (float)ratoSpriteSheet.height
@@ -460,13 +457,13 @@ void DrawGame(Vector2& cameraOffset, float timer){
 
         EndMode2D();
 
-        DrawUI(timer);  // UI always on top (no camera)
+        DrawUI(timer);  // UI sempre acima
     }
 }
 
 void DrawWorld(const Vector2& cameraOffset) {
 
-    // Tamanho da pista: 30000px de comprimento
+    // Tamanho da pista: Max_x_position de comprimento
     int max_pos = MAX_X_POSITION;
     // Get dynamic screen dimensions
     int screenWidth = GetScreenWidth();
@@ -479,7 +476,7 @@ void DrawWorld(const Vector2& cameraOffset) {
 
     DrawMovingYellowStripes( cameraOffset, screenWidth, screenHeight, finishX);
 
-    // Faixa vertical branca (largura 40px)
+    // Faixa vertical branca
     DrawRectangle(finishX, 100, 40, 500, WHITE);
 
     // Padrão xadrez
@@ -546,7 +543,7 @@ void CleanupGame() {
     }
 }
 
-// ======================== FUNÇÕES DO MENU (NÃO REMOVA!) ========================
+// ======================== FUNÇÕES DO MENU (NÃO REMOVER!) ========================
 
 
 
@@ -593,7 +590,7 @@ void ResetGame() {
     faseComplete = false;
     animationTime = 0.0f;
     currentFrame = 0;
-    player.life = 25;
+    player.life = 10;
     livesTimer = 0.0f;
     wasColliding = false;  // Resetar flag de colisão ao reiniciar
 }

@@ -52,7 +52,7 @@ void fase_natacao(){
     
     float timer = 0.0f; float limite_tela_x = 1050.0f; 
     
-    // float corrente = 0.2f; // correnteza puxando jogador para a direita (opcional) 
+    // float corrente = 0.2f; // correnteza puxando jogador para a direita - desabilitado
 
     // --------------------------- // CARREGAR SPRITE SHEET // --------------------------- 
 
@@ -298,16 +298,15 @@ void fase_natacao(){
 
 
         ClearBackground((Color){ 0, 135, 255, 25}); // Azul escuro água Recife 
-        DrawRectangle(0, -1000, 2000, 31000, (Color){0, 135, 255, 25}); // Ondinhas (efeito) 
-
+        
         for (int i = 0; i < 1800; i += 60) { 
             DrawRectangle(100,-29000, 16,30000, ORANGE); 
             DrawRectangle(1100, -29000, 16, 30000, ORANGE); 
         } 
         // DrawText("TRIATHLON - FASE DA NATACAO", 300, 20, 30, WHITE); 
-
+        
         if (timer < 5) DrawText("FASE 2 - NATAÇÃO", 450, 60, 40, YELLOW); // Desenhar jogador 
-
+        
         if (playerSpriteLoaded) { 
             Rectangle frameRect = { currentFrame * playerFrameWidth, 0, playerFrameWidth, (float)playerSpriteSheet.height }; 
             DrawTextureRec(playerSpriteSheet, frameRect, (Vector2){player.position.x, player.position.y}, WHITE); 
@@ -315,7 +314,7 @@ void fase_natacao(){
         else { 
             DrawRectangle(player.position.x, player.position.y, player.width, player.height, BLACK); 
         } 
-
+        
         
         // Desenhar tubarões com sprite ou círculo vermelho como fallback
         if (tubaraoSpriteLoaded && tubaraoSpriteSheet.id > 0) {
@@ -341,37 +340,38 @@ void fase_natacao(){
             destRect.x = tubarao.position.x;
             destRect.y = tubarao.position.y;
             DrawTexturePro(tubaraoSpriteSheet, tubaraoFrameRect, destRect, 
-                          origin, 90.0f, WHITE);
-            
-            // Desenhar tubarão 2 (move para CIMA: y diminui)
-            // Sem rotação (0 graus) - sprite já aponta para cima
-            destRect.x = tubarao_2.position.x;
-            destRect.y = tubarao_2.position.y;
-            DrawTexturePro(tubaraoSpriteSheet, tubaraoFrameRect, destRect, 
-                          origin, 0.0f, WHITE);
-            
-            // Desenhar tubarão 3 (move para DIREITA: x aumenta)
-            // Rotacionar -90 graus para apontar para direita
-            destRect.x = tubarao_3.position.x;
-            destRect.y = tubarao_3.position.y;
-            DrawTexturePro(tubaraoSpriteSheet, tubaraoFrameRect, destRect, 
-                          origin, -90.0f, WHITE);
-        } else {
-            // Fallback: círculos vermelhos
-            DrawCircle(tubarao.position.x, tubarao.position.y, 20, RED); 
-            DrawCircle(tubarao_2.position.x, tubarao_2.position.y, 20, RED); 
-            DrawCircle(tubarao_3.position.x, tubarao_3.position.y, 20, RED);
-        }
-        
-        EndMode2D();  // Fechar modo 2D antes de desenhar textos na tela
-        
-        // DrawText(TextFormat("Distancia do final:  %.2f",(-10000/player.position.y) - 1), 30, 80, 20, YELLOW);
-        DrawText(TextFormat("VIDAS: %d", player.life), 10, 110, 30, playerImune ? RED : YELLOW);
-        if (colisao) DrawText("COLISAO!", 520, 350, 40, RED); 
-
-        DrawText("WASD para nadar | ESC para reiniciar fase", 20, 680, 20, WHITE); 
-
-        EndDrawing(); 
+                origin, 90.0f, WHITE);
+                
+                // Desenhar tubarão 2 (move para CIMA: y diminui)
+                // Sem rotação (0 graus) - sprite já aponta para cima
+                destRect.x = tubarao_2.position.x;
+                destRect.y = tubarao_2.position.y;
+                DrawTexturePro(tubaraoSpriteSheet, tubaraoFrameRect, destRect, 
+                    origin, 0.0f, WHITE);
+                    
+                    // Desenhar tubarão 3 (move para DIREITA: x aumenta)
+                    // Rotacionar -90 graus para apontar para direita
+                    destRect.x = tubarao_3.position.x;
+                    destRect.y = tubarao_3.position.y;
+                    DrawTexturePro(tubaraoSpriteSheet, tubaraoFrameRect, destRect, 
+                        origin, -90.0f, WHITE);
+                    } else {
+                        // Fallback: círculos vermelhos
+                        DrawCircle(tubarao.position.x, tubarao.position.y, 20, RED); 
+                        DrawCircle(tubarao_2.position.x, tubarao_2.position.y, 20, RED); 
+                        DrawCircle(tubarao_3.position.x, tubarao_3.position.y, 20, RED);
+                    }
+                    
+                    EndMode2D();  // Fechar modo 2D antes de desenhar textos na tela
+                    
+                    // DrawText(TextFormat("Distancia do final:  %.2f",(-10000/player.position.y) - 1), 30, 80, 20, YELLOW);
+                    DrawText(TextFormat("VIDAS: %d", player.life), 10, 110, 30, playerImune ? RED : YELLOW);
+                    // if (colisao) DrawText("COLISAO!", 520, 350, 40, RED); 
+                    DrawRectangle(0, -1000, 2000, 31000, (Color){0, 135, 255, 25}); // Ondinhas (efeito) 
+                    
+                    DrawText("WASD para nadar | ESC para reiniciar fase", 20, 680, 20, WHITE); 
+                    
+                    EndDrawing(); 
 
     } // Limpeza // 
 
