@@ -6,7 +6,7 @@
 #include "fase_natacao.h"
 #include "menu.h"
 
-#define MAX_X_POSITION 30000;
+#define MAX_X_POSITION 7000;
 
 Player player;
 Obstacle lixo;
