@@ -81,7 +81,7 @@ void InitGame() {
     ResetGame();
     player = { {400, 300}, {2.0f, 2.0f}, 50, 70 };
     lixo = { {1000, 200}, {1.30f, 1.30f}, 30, 30 };
-    player.life = 25;
+    player.life = 10;
 
     livesTimer = 0.0f;
     LoadPlayerSprite();
@@ -308,7 +308,7 @@ void UpdatePlayer() {
             if (player.life <= 0) {
                 currentState = MENU;
                 TraceLog(LOG_INFO, "GAME OVER - Voltando ao menu");
-                player.life = 25;
+                player.life = 10;
                 playerImune = false;
                 return;
             }
@@ -590,7 +590,7 @@ void ResetGame() {
     faseComplete = false;
     animationTime = 0.0f;
     currentFrame = 0;
-    player.life = 25;
+    player.life = 10;
     livesTimer = 0.0f;
     wasColliding = false;  // Resetar flag de colisão ao reiniciar
 }
