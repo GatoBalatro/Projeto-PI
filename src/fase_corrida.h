@@ -6,11 +6,15 @@
 #include "fase_natacao.h"
 #include "menu.h"
 
+#define MAX_X_POSITION 7000;
+
 Player player;
 Obstacle lixo;
 Texture2D playerSpriteSheet = {0};
 RenderTexture2D linhasTexture;
 bool playerSpriteLoaded = false;
+
+float livesTimer = 0.0f;
 
 int playerFrameCount = 8;
 float playerFrameWidth = 0.0f;
@@ -49,6 +53,7 @@ bool victorySoundLoaded = false;
 Music gameMusic = {0};
 bool gameMusicLoaded = false;
 
+
 void LoadPlayerSprite();
 void LoadRatoSprite();
 void LoadCollisionSound();
@@ -74,10 +79,10 @@ void UpdateScroll(float dt);
 void InitGame() {
     ResetGame();
     player = { {400, 300}, {2.0f, 2.0f}, 50, 70 };
-    lixo = { {1000, 200}, {1.20f, 1.20f}, 30, 30 };
-    player.life = 3;
+    lixo = { {1000, 200}, {1.30f, 1.30f}, 30, 30 };
+    player.life = 25;
 
-
+    livesTimer = 0.0f;
     LoadPlayerSprite();
     LoadRatoSprite();
     LoadCollisionSound();
@@ -90,8 +95,9 @@ void LoadPlayerSprite() {
     if (playerSpriteLoaded) return;
 
     const char* paths[] = {
-        "player.png", "src/player.png", "../src/player.png",
-        "sprites/player.png", "assets/player.png"
+        "../img/player.png",
+        "img/player.png",
+        "player.png"
     };
 
     for (int i = 0; i < 5; i++) {
@@ -114,8 +120,9 @@ void LoadRatoSprite() {
     if (ratoSpriteLoaded) return;
 
     const char* paths[] = {
-        "rato-Sheet.png", "src/rato-Sheet.png", "../src/rato-Sheet.png",
-        "sprites/rato-Sheet.png", "assets/rato-Sheet.png"
+        "../img/rato-Sheet.png",
+        "img/rato-Sheet.png",
+        "rato-Sheet.png"
     };
 
     for (int i = 0; i < 5; i++) {
@@ -138,8 +145,9 @@ void LoadCollisionSound() {
     if (collisionSoundLoaded) return;
 
     const char* soundPaths[] = {
-        "punch.ogg", "src/punch.ogg", 
-        "../src/punch.ogg", "assets/punch.ogg"
+        "../audio/punch.ogg",
+        "audio/punch.ogg",
+        "punch.ogg"
     };
 
     for (int i = 0; i < 4; i++) {
@@ -158,8 +166,9 @@ void LoadVictorySound() {
     if (victorySoundLoaded) return;
 
     const char* soundPaths[] = {
-        "victoryff.swf.ogg", "src/victoryff.swf.ogg", 
-        "../src/victoryff.swf.ogg", "assets/victoryff.swf.ogg"
+        "../audio/victoryff.swf.ogg",
+        "audio/victoryff.swf.ogg",
+        "victoryff.swf.ogg"
     };
 
     for (int i = 0; i < 4; i++) {
@@ -178,10 +187,9 @@ void LoadGameMusic() {
     if (gameMusicLoaded) return;
 
     const char* musicPaths[] = {
-        "Pizza-Tower-OST-Thousand-March-_WAR_.ogg",
-        "src/Pizza-Tower-OST-Thousand-March-_WAR_.ogg",
-        "../src/Pizza-Tower-OST-Thousand-March-_WAR_.ogg",
-        "assets/Pizza-Tower-OST-Thousand-March-_WAR_.ogg"
+        "../audio/Pizza-Tower-OST-Thousand-March-_WAR_.ogg",
+        "audio/Pizza-Tower-OST-Thousand-March-_WAR_.ogg",
+        "Pizza-Tower-OST-Thousand-March-_WAR_.ogg"
     };
 
     for (int i = 0; i < 4; i++) {
@@ -208,7 +216,7 @@ void StopGameMusic() {
 
 void UpdateGame(float dt) {
     // --- 1. Global Updates (Run regardless of state) ---
-
+    
     // Atualizar invencibilidade
     if (playerImune) {
         invencivelTimer -= dt;
@@ -217,6 +225,9 @@ void UpdateGame(float dt) {
         }
     }
 
+    if (livesTimer > 0.0f) {
+        livesTimer -= dt;
+    }
 
     if (currentState != FASE_CORRIDA) return;
 
@@ -257,19 +268,19 @@ void UpdatePlayer() {
     if (IsKeyDown(KEY_S)) player.position.y += player.speed.y;
 
     // Collision check (SCREEN coords - NO scrollOffset!)
-    Rectangle playerRec = { player.position.x, player.position.y, (float)player.width, (float)player.height };
-    Rectangle lixoRec = { lixo.position.x, lixo.position.y, (float)lixo.width, (float)lixo.height };
+    Rectangle playerRec = { player.position.x, player.position.y, (float)player.width/1.5, (float)player.height/1.5 };
+    Rectangle lixoRec = { lixo.position.x + 100, lixo.position.y+50, (float)lixo.width/1.3, (float)lixo.height/2.4 };
+    bool colliding = CheckCollisionRecs(playerRec, lixoRec);
 
    if (lixo.position.x <= player.position.x - 600) {
         lixo.position.x = player.position.x + 800;
         lixo.position.y += 100;
-        lixo.speed = {lixo.speed.x + 0.1f, lixo.speed.y + 0.1f}; // Aumenta a velocidade do lixo a cada reset
+        lixo.speed = {lixo.speed.x + 0.11f, lixo.speed.y + 0.11f}; // Aumenta a velocidade do lixo a cada reset
         if (lixo.position.y + lixo.height >= 650) {
             lixo.position.y = 100;
         }
     }
     
-    bool colliding = CheckCollisionRecs(playerRec, lixoRec);
 
     // Tocar SFX de colisão quando detectar nova colisão
     if (colliding && !wasColliding && collisionSoundLoaded) {
@@ -278,15 +289,34 @@ void UpdatePlayer() {
     wasColliding = colliding;  // Atualizar flag para próxima frame
 
     // ORIGINAL LOGIC: Horizontal A/D + lixo move ONLY if !colliding → "STOPS" on hit
-    if (IsKeyDown(KEY_A)) player.position.x -= player.speed.x;
-    if (IsKeyDown(KEY_D)) player.position.x += player.speed.x;
+    if (IsKeyDown(KEY_A)) {
+        if(player.position.x >0){ 
+        player.position.x -= player.speed.x;
+    }
+    };
+
+    if (IsKeyDown(KEY_D)) {
+        player.position.x += player.speed.x;
+    };
     lixo.position.x -= lixo.speed.x;
 
    
     if (colliding) {
 
+
+
+            if (player.life <= 0) {
+                currentState = MENU;
+                TraceLog(LOG_INFO, "GAME OVER - Voltando ao menu");
+                player.life = 25;
+                playerImune = false;
+                return;
+            }
+
+        
         // Se ainda não está imune, perde vida
         if (!playerImune) {
+            livesTimer = 0.2f;  // Piscar vidas por 0.2s
             player.life -= 1;
             playerImune = true;
             invencivelTimer = invencivelDuration;
@@ -302,8 +332,8 @@ void UpdatePlayer() {
 
     // Bounds (full screen width)
     player.position.y = fmaxf(0, fminf(player.position.y, 700 - player.height));
-
-      if (player.position.x > 30000) {
+      int max_pos = MAX_X_POSITION;
+      if (player.position.x > max_pos){
         // Tocar som de vitória ao completar a fase
         if (victorySoundLoaded && victorySound.frameCount > 0) {
             PlaySound(victorySound);
@@ -342,6 +372,39 @@ void UpdateCamera(Vector2& cameraOffset, float& position_x_mais_longe) {
 }
 
 // ======================== RENDERING ========================
+
+void DrawMovingYellowStripes(Vector2 cameraOffset, int screenWidth, int screenHeight, int finishline) {
+    const int roadY = 100;
+    const int roadHeight = 500;
+    
+    const int stripeWidth = 140;
+    const int stripeHeight = 28;
+    const int gap = 200;                 // Distance between stripes
+    const float parallaxFactor = 1.1f;   
+
+    // Use camera offset as the scrolling source 
+    float scroll = cameraOffset.x * parallaxFactor;
+    float offset = fmodf(scroll, gap);
+    if (offset < 0) offset += gap;
+    int max_pos = MAX_X_POSITION;
+    // Number of stripes needed to cover screen + buffer
+    int stripesNeeded = (max_pos / gap) + 4;
+
+    for (int i = -2; i < stripesNeeded; i++) {
+        float worldX = i * gap;
+        float screenX = worldX - offset;
+
+        // Only draw stripes on the road
+        if (screenX > -stripeWidth &&  screenX < finishline) {
+            int y = roadY + roadHeight/2 - stripeHeight/2;
+
+            DrawRectangle((int)screenX, y, stripeWidth, stripeHeight, YELLOW);
+            DrawRectangleLinesEx((Rectangle){screenX, (float)y, (float)stripeWidth, (float)stripeHeight}, 3, BLACK);
+        
+        }
+    }
+}
+
 void DrawGame(Vector2& cameraOffset, float timer){  
     // Não chamar BeginDrawing/EndDrawing aqui - já são chamados no loop principal
     // ClearBackground também é chamado no loop principal antes desta função
@@ -358,7 +421,19 @@ void DrawGame(Vector2& cameraOffset, float timer){
 
         DrawWorld(cameraOffset);  // Camera follows player
         DrawPlayer();
+
         
+        BeginMode2D((Camera2D){ 
+            .offset = {600, 350}, 
+            .target = {player.position.x, 350}, 
+            .rotation = 0.0f, 
+            .zoom = 1.0f 
+        });
+
+        
+        DrawWorld(cameraOffset);
+        
+        DrawPlayer();
         // Desenhar rato com sprite ou retângulo vermelho como fallback
         if (ratoSpriteLoaded && ratoSpriteSheet.id > 0) {
             Rectangle ratoFrameRect = {
@@ -391,10 +466,17 @@ void DrawGame(Vector2& cameraOffset, float timer){
 void DrawWorld(const Vector2& cameraOffset) {
 
     // Tamanho da pista: 30000px de comprimento
-    DrawRectangle(-200, 100, 30000, 500, DARKGRAY);
-    DrawRectangleLinesEx({-200, 100, 30000, 500}, 10, WHITE);
+    int max_pos = MAX_X_POSITION;
+    // Get dynamic screen dimensions
+    int screenWidth = GetScreenWidth();
+    int screenHeight = GetScreenHeight();
+    float finishX = (float)max_pos;   // posição real no mundo
+        
 
-    float finishX = 29800.0f;   // posição real no mundo
+    DrawRectangle(-200, 100, max_pos + (screenWidth), 500, DARKGRAY);
+    DrawRectangleLinesEx({-200, 100, (float)(max_pos + screenWidth), 500}, 10, WHITE);
+
+    DrawMovingYellowStripes( cameraOffset, screenWidth, screenHeight, finishX);
 
     // Faixa vertical branca (largura 40px)
     DrawRectangle(finishX, 100, 40, 500, WHITE);
@@ -408,7 +490,7 @@ void DrawWorld(const Vector2& cameraOffset) {
     DrawText("CHEGADA", finishX - 40, 70, 40, GOLD);
  
 
-        DrawText("Pista vista de cima", 10, 10, 30, WHITE);
+        // DrawText("Pista vista de cima", 10, 10, 30, WHITE);
         DrawText(TextFormat("Fase: %d", currentFase), 1000, 10, 30, GOLD);
 }
 
@@ -428,14 +510,21 @@ void DrawPlayer() {
 
 void DrawUI(float timer) {
 
-    DrawText(TextFormat("Player X: %.2f", player.position.x), 10, 80, 20, YELLOW);
+    // DrawText(TextFormat("Player X: %.2f", player.position.x), 10, 80, 20, YELLOW);
+
 
     if (timer < 5.0f) DrawText(TextFormat("Fase %d", currentFase), 500, 30, 60, GOLD);
     DrawText("Use W/S pra mover verticalmente!", 10, 40, 20, WHITE);  
-    DrawText("ESC - Menu", 10, 650, 20, GRAY);
+    DrawText("ESC - Sair da partida", 10, 650, 20, GRAY);
 
     Rectangle playerRec = {player.position.x, player.position.y, (float)player.width, (float)player.height};
     Rectangle lixoRec = {lixo.position.x - scrollOffset, lixo.position.y, (float)lixo.width, (float)lixo.height};
+
+    bool showLives = !playerImune || fmodf(livesTimer / 0.1f, 2.0f) < 1.0f;
+    if (showLives) {
+        DrawText(TextFormat("VIDAS: %d", player.life), 10, 110, 30, playerImune ? RED : YELLOW);
+    }
+
 
     // if (CheckCollisionRecs(playerRec, lixoRec)) {
     //     DrawText("Colidiu com o lixo! Fase reiniciada.", 350, 350, 30, RED);
@@ -490,19 +579,21 @@ void DrawCredits() {
 
 
 void ResetGame() {
-    // player.position = {400, 300};
-    // // player.speed = {2.0f, 2.0f};
+    player.position = {400, 300};
+    // player.speed = {2.0f, 2.0f};
 
-    // lixo.position = {1000, 200};
-    // // lixo.speed = {2.0f, 2.0f};
-    // lixo.width = 30;
-    // lixo.height = 30;
+    lixo.position = {1000, 200};
+    // lixo.speed = {2.0f, 2.0f};
+    lixo.width = 30;
+    lixo.height = 30;
     
-    // scrollOffset = 0.0f;
-    // currentFase = 1;
-    // faseComplete = false;
-    // animationTime = 0.0f;
-    // currentFrame = 0;
+    scrollOffset = 0.0f;
+    currentFase = 1;
+    faseComplete = false;
+    animationTime = 0.0f;
+    currentFrame = 0;
+    player.life = 25;
+    livesTimer = 0.0f;
     wasColliding = false;  // Resetar flag de colisão ao reiniciar
 }
 

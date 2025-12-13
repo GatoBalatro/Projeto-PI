@@ -32,21 +32,24 @@ void fase_natacao(){
     Obstacle tubarao_3;
     Music waterMusic; 
     bool musicLoaded = false; 
-
+    
     // Variáveis para SFX de colisão
     Sound collisionSound = {0};
     bool collisionSoundLoaded = false;
     bool wasColliding = false;  // Flag para rastrear colisão anterior
-
+    
     bool playerImune = false;
     float invencivelTimer = 0.0f;
     const float invencivelDuration = 1.0f; // 1 segundo imune
-
-    player = { {300, 350}, {1.4f, 1.4f}, 50, 50 }; // Velocidade menor 
+    
+    player = { {300, 350}, {1.4f, 1.4f}, 50, 50}; // Velocidade menor 
     tubarao = { {1200, 300}, {4.0f, -3.0f}, 40, 40 }; 
     tubarao_2 = { {500, player.position.y - 600}, {3.0f, -2.0f}, 40, 40 };
     tubarao_3 = { {-50, 300}, {5.0f, -4.0f}, 40, 40 };
 
+    player.life = 25;
+    float livesTimer = 0.0f;
+    
     float timer = 0.0f; float limite_tela_x = 1050.0f; 
     
     // float corrente = 0.2f; // correnteza puxando jogador para a direita (opcional) 
@@ -55,7 +58,11 @@ void fase_natacao(){
 
     if (!playerSpriteLoaded) { 
 
-        const char* paths[] = { "swimmer.png", "src/swimmer.png", "assets/swimmer.png", "../src/swimmer.png" }; 
+        const char* paths[] = { 
+        "../img/swimmer.png",  // Prioridade: busca na pasta irmã img
+        "img/swimmer.png",     // Fallback: busca se executável estiver na raiz
+        "swimmer.png"          // Fallback final
+         }; 
 
         for (int i = 0; i < 4; i++) { 
 
@@ -81,10 +88,9 @@ void fase_natacao(){
     // --------------------------- // CARREGAR SPRITE SHEET DO TUBARÃO // --------------------------- 
     if (!tubaraoSpriteLoaded) {
         const char* tubaraoPaths[] = { 
-            "hai-fin-shadow-Sheet-Sheet.png", 
-            "src/hai-fin-shadow-Sheet-Sheet.png", 
-            "assets/hai-fin-shadow-Sheet-Sheet.png", 
-            "../src/hai-fin-shadow-Sheet-Sheet.png" 
+            "../img/hai-fin-shadow-Sheet-Sheet.png", 
+            "img/hai-fin-shadow-Sheet-Sheet.png", 
+            "hai-fin-shadow-Sheet-Sheet.png"
         };
 
         for (int i = 0; i < 4; i++) {
@@ -113,7 +119,11 @@ void fase_natacao(){
     // --------------------------- // CARREGAR MÚSICA DE ÁGUA // --------------------------- 
     if (!musicLoaded) { 
 
-        const char* musicPaths[] = { "water.ogg", "src/water.ogg", "../src/water.ogg", "assets/water.ogg" }; 
+        const char* musicPaths[] = {
+            "../audio/water.ogg", 
+            "audio/water.ogg", 
+            "water.ogg"
+         }; 
         for (int i = 0; i < 4; i++) { 
 
         waterMusic = LoadMusicStream(musicPaths[i]); 
@@ -131,10 +141,9 @@ void fase_natacao(){
     // --------------------------- // CARREGAR SFX DE COLISÃO // --------------------------- 
     if (!collisionSoundLoaded) {
         const char* soundPaths[] = { 
-            "cartoon_bite_sound_effect.mp3", 
-            "src/cartoon_bite_sound_effect.mp3", 
-            "../src/cartoon_bite_sound_effect.mp3", 
-            "assets/cartoon_bite_sound_effect.mp3" 
+                "../audio/cartoon_bite_sound_effect.mp3", 
+                "audio/cartoon_bite_sound_effect.mp3", 
+                "cartoon_bite_sound_effect.mp3"
         };
         
         for (int i = 0; i < 4; i++) {
@@ -157,11 +166,19 @@ void fase_natacao(){
     
     while (!WindowShouldClose()) { // Atualizar música // 
 
+        float dt = GetFrameTime();
+        timer += dt;
+
         if (musicLoaded) UpdateMusicStream(waterMusic); 
 
         if (player.position.y < -10000) { 
         currentState = MENU; // Trocar para proxima fase
         break; 
+        }
+
+        if (IsKeyPressed(KEY_ESCAPE) or player.life <= 0) {
+            currentState = MENU;
+            return;
         }
 
         timer += GetFrameTime(); // // Correnteza puxando o jogador horizontalmente // 
@@ -188,8 +205,9 @@ void fase_natacao(){
         } 
         
         // Movimento com WASD 
+        if (IsKeyDown(KEY_S) && player.position.y > 0) player.position.y += player.speed.y;
+         
         if (IsKeyDown(KEY_W)) player.position.y -= player.speed.y; 
-        if (IsKeyDown(KEY_S)) player.position.y += player.speed.y; 
         if (IsKeyDown(KEY_A)) player.position.x -= player.speed.x; 
         if (IsKeyDown(KEY_D)) player.position.x += player.speed.x; 
 
@@ -222,12 +240,10 @@ void fase_natacao(){
         if (player.position.x > limite_tela_x) player.position.x = limite_tela_x; 
         if (player.position.y > 650 - player.height) player.position.y = 650 - player.height; 
 
-        DrawText(TextFormat("Player Y: %.2f", player.position.y), 30, 80, 20, YELLOW); 
-
-        Rectangle rPlayer = {player.position.x, player.position.y, (float)player.width, (float)player.height}; 
-        Rectangle rtubarao = {tubarao.position.x, tubarao.position.y, (float)tubarao.width, (float)tubarao.height}; 
-        Rectangle rtubarao_2 = {tubarao_2.position.x, tubarao_2.position.y, (float)tubarao_2.width, (float)tubarao_2.height}; 
-        Rectangle rtubarao_3 = {tubarao_3.position.x, tubarao_3.position.y, (float)tubarao_3.width, (float)tubarao_3.height};
+        Rectangle rPlayer = {player.position.x, player.position.y, (float)player.width/1.5, (float)player.height/1.5}; 
+        Rectangle rtubarao = {tubarao.position.x - 40, tubarao.position.y - 30,  (float)tubarao_2.height/3, (float)tubarao_2.width/8}; 
+        Rectangle rtubarao_2 = {tubarao_2.position.x- 30, tubarao_2.position.y- 40, (float)tubarao.width/6, (float)tubarao.height/3}; 
+        Rectangle rtubarao_3 = {tubarao_3.position.x - 40, tubarao_3.position.y - 30,(float)tubarao_3.height/3,  (float)tubarao_3.width/8};
 
         bool colisao = CheckCollisionRecs(rPlayer, rtubarao); 
         colisao = colisao || CheckCollisionRecs(rPlayer, rtubarao_2); 
@@ -239,6 +255,27 @@ void fase_natacao(){
         }
         wasColliding = colisao;  // Atualizar flag para próxima frame
 
+        // Perder vida se colidir e não imune
+        if (colisao && !playerImune) {
+            player.life--;
+            playerImune = true;
+            invencivelTimer = invencivelDuration;
+            livesTimer = 0.2f;
+            TraceLog(LOG_INFO, "Vida perdida na natação! Vidas: %d", player.life);
+
+            if (player.life <= 0) {
+                currentState = MENU;
+                TraceLog(LOG_INFO, "GAME OVER na natação - Voltando ao menu");
+                break;
+            }
+        }
+        // Atualizar timers
+        if (playerImune) {
+            invencivelTimer -= dt;
+            if (invencivelTimer <= 0) playerImune = false;
+        }
+        if (livesTimer > 0) livesTimer -= dt;
+
         // --------------------------- // DESENHO // --------------------------- 
 
         BeginDrawing(); 
@@ -249,6 +286,8 @@ void fase_natacao(){
             .target = {600, player.position.y}, 
             .rotation = 0.0f, .zoom = 1.0f 
         }); // Desenhar boia 
+
+        bool showLives = !playerImune || fmodf(livesTimer / 0.1f, 2.0f) < 1.0f;
 
         int chegadaY = -9950;
         DrawRectangle(100, chegadaY, 1000, 40, WHITE); // fundo branco
@@ -330,10 +369,11 @@ void fase_natacao(){
         
         EndMode2D();  // Fechar modo 2D antes de desenhar textos na tela
         
-        DrawText(TextFormat("Player Y: %.2f", player.position.y), 30, 80, 20, YELLOW);
-
+        // DrawText(TextFormat("Player Y: %.2f", player.position.y), 30, 80, 20, YELLOW);
+        DrawText(TextFormat("VIDAS: %d", player.life), 10, 110, 30, playerImune ? RED : YELLOW);
         if (colisao) DrawText("COLISAO!", 520, 350, 40, RED); 
-        DrawText("WASD para nadar | ESC para sair", 20, 680, 20, WHITE); 
+
+        DrawText("WASD para nadar | ESC para reiniciar fase", 20, 680, 20, WHITE); 
 
         EndDrawing(); 
 
