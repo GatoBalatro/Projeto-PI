@@ -52,7 +52,7 @@ void fase_natacao(){
     
     float timer = 0.0f; float limite_tela_x = 1050.0f; 
     
-    // float corrente = 0.2f; // correnteza puxando jogador para a direita (opcional) 
+    // float corrente = 0.2f; // correnteza puxando jogador para a direita - desabilitado
 
     // --------------------------- // CARREGAR SPRITE SHEET // --------------------------- 
 
