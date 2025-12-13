@@ -171,15 +171,11 @@ void fase_natacao(){
 
         if (musicLoaded) UpdateMusicStream(waterMusic); 
 
-        if (player.position.y < -10000) { 
-        currentState = MENU; // Trocar para proxima fase
+        if (player.position.y < -10000 or IsKeyPressed(KEY_ESCAPE) or player.life <= 0) { 
+        currentState = MENU; // volta para menu
         break; 
         }
 
-        if (IsKeyPressed(KEY_ESCAPE) or player.life <= 0) {
-            currentState = MENU;
-            return;
-        }
 
         timer += GetFrameTime(); // // Correnteza puxando o jogador horizontalmente // 
         // player.position.x += corrente; // Atualizar animação do jogador
@@ -369,7 +365,7 @@ void fase_natacao(){
         
         EndMode2D();  // Fechar modo 2D antes de desenhar textos na tela
         
-        // DrawText(TextFormat("Player Y: %.2f", player.position.y), 30, 80, 20, YELLOW);
+        // DrawText(TextFormat("Distancia do final:  %.2f",(-10000/player.position.y) - 1), 30, 80, 20, YELLOW);
         DrawText(TextFormat("VIDAS: %d", player.life), 10, 110, 30, playerImune ? RED : YELLOW);
         if (colisao) DrawText("COLISAO!", 520, 350, 40, RED); 
 
